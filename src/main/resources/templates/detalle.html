@@ -11,8 +11,13 @@
 <header class="private-header">
     <h1>🍳 Bienvenido a RecetaApp</h1>
     <div class="user-info">
-        <span>Usuario conectado desde el backend</span>
-        <a href="/login" class="logout-btn">Cerrar Sesión</a>
+        <span th:if="${authenticated}">
+            Usuario conectado: <strong th:text="${username}">usuario</strong>
+        </span>
+        <span th:unless="${authenticated}">
+            Usuario no autenticado
+        </span>
+        <button class="logout-btn" onclick="handleLogout()">Cerrar Sesión</button>
     </div>
 </header>
 
@@ -188,6 +193,58 @@
         </div>
     </article>
 </main>
+
+<script>
+    async function handleLogout() {
+        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Redireccionar al login
+                    window.location.href = '/login';
+                } else {
+                    alert('Error al cerrar sesión: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                // Redireccionar de cualquier forma al login
+                window.location.href = '/login';
+            }
+        }
+    }
+
+    // Verificar autenticación al cargar la página
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const response = await fetch('/api/check-auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (!result.authenticated) {
+                // Si no está autenticado, redireccionar al login
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error checking authentication:', error);
+            // En caso de error, redireccionar al login por seguridad
+            window.location.href = '/login';
+        }
+    });
+</script>
 
 </body> 
 </html>
