@@ -1,0 +1,16 @@
+{
+  "idReceta": 1,
+  "titulo": "Tacos al Pastor",
+  "tipoCocina": "Casera",
+  "paisOrigen": "México",
+  "dificultad": "Media",
+  "tiempoCoccion": 50,
+  "instrucciones": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras vestibulum, quam et venenatis gravida, lectus lacus ornare orci, eget accumsan lacus orci id ante. In gravida congue sodales. Sed egestas dictum luctus. Maecenas ut nibh nec eros tempor semper. Integer blandit, risus sit amet sodales egestas, mauris arcu dapibus ante, id scelerisque erat tellus ut ex. Aenean vulputate sem nibh. Aenean venenatis, ante sit amet egestas pretium, libero ligula dictum dui, vel lacinia nisl nunc sit amet justo. Aenean et dolor sit amet lorem pretium dapibus in at nisl. Curabitur feugiat consectetur lectus ut dignissim. Suspendisse accumsan lacinia dui, eget ultricies eros feugiat a.",
+  "ingredientes":
+      [
+        { "nombre": "Cerdo",
+          "cantidad": 1,
+          "unidad": "kg" }
+      ]
+
+}
