@@ -79,6 +79,110 @@ body {
     box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
 }
 
+.nav-btn.secondary {
+    background: linear-gradient(135deg, #00cec9, #00b894);
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
+.nav-btn.logout {
+    background: linear-gradient(135deg, #e17055, #d63031);
+    font-size: 14px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Estilos para el saludo del usuario */
+.user-greeting {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.greeting-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #2d3436;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.greeting-icon {
+    font-size: 18px;
+}
+
+.user-menu {
+    display: flex;
+    gap: 10px;
+}
+
+/* Estilos para acciones de recetas */
+.recipe-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.add-to-list-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-to-list-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(253, 121, 168, 0.3);
+}
+
+.add-to-list-btn .btn-icon {
+    font-size: 16px;
+}
+
+/* Estilos para prompt de login */
+.login-prompt {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.prompt-text {
+    text-align: center;
+    font-size: 13px;
+    color: #636e72;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.prompt-icon {
+    font-size: 14px;
+}
+
+.prompt-link {
+    color: #6c5ce7;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.prompt-link:hover {
+    text-decoration: underline;
+}
+
 .hero {
     background: linear-gradient(135deg, #74b9ff, #6c5ce7, #fd79a8);
     color: white;
@@ -285,6 +389,33 @@ body {
 .difficulty.medium {
     background: linear-gradient(135deg, #fdcb6e, #e17055);
     color: white;
+}
+
+.difficulty.hard {
+    background: linear-gradient(135deg, #e17055, #d63031);
+    color: white;
+}
+
+/* Estilos para mensajes de error */
+.error-message {
+    background: #ffe6e6;
+    border: 1px solid #ff7675;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #d63031;
+}
+
+.error-message span {
+    font-size: 20px;
+}
+
+.error-message p {
+    margin: 0;
+    font-weight: 500;
 }
 
 .benefits-section {

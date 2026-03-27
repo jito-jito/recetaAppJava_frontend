@@ -15,7 +15,26 @@
                 <span class="brand-text">RecetaApp</span>
             </div>
             <div class="nav-actions">
-                <a href="/login" class="nav-btn">
+                <!-- Mostrar saludo si está autenticado -->
+                <div th:if="${authenticated}" class="user-greeting">
+                    <span class="greeting-text">
+                        <span class="greeting-icon">👋</span>
+                        ¡Hola, <strong th:text="${username}">Usuario</strong>!
+                    </span>
+                    <div class="user-menu">
+                        <a href="/detalle" class="nav-btn secondary">
+                            <span class="btn-icon">📚</span>
+                            Mis Recetas
+                        </a>
+                        <button class="nav-btn logout" onclick="handleLogoutFromHome()">
+                            <span class="btn-icon">🚪</span>
+                            Salir
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mostrar botón de acceder si no está autenticado -->
+                <a th:unless="${authenticated}" href="/login" class="nav-btn">
                     <span class="btn-icon">👤</span>
                     Acceder
                 </a>
@@ -100,7 +119,7 @@
                         </div>
                     </div>
                     
-                    <div class="search-suggestions">
+                    <!-- <div class="search-suggestions">
                         <p>Búsquedas populares:</p>
                         <div class="suggestion-tags">
                             <span class="suggestion-tag" onclick="searchByKeyword('frutas')">Frutas 🍓</span>
@@ -109,7 +128,7 @@
                             <span class="suggestion-tag" onclick="searchByKeyword('postre')">Postres 🍰</span>
                             <span class="suggestion-tag" onclick="searchByKeyword('saludable')">Saludable 💚</span>
                         </div>
-                    </div>
+                    </div> -->
                     
                     <div id="searchResults" class="search-results"></div>
                 </div>
@@ -118,114 +137,133 @@
 
         <section class="recipes-section">
             <div class="container">
+                <div th:if="${error}" class="error-message">
+                    <span>⚠️</span>
+                    <p th:text="${error}">Error cargando recetas</p>
+                </div>
+                
                 <div class="recipes-grid" id="recipesGrid">
-                    <article class="recipe-card" data-difficulty="easy" data-time="15" data-type="ensalada" data-keywords="frutas tropical piña mango fresas papaya limón menta">
+                    <!-- Recetas dinámicas del backend -->
+                    <article th:each="receta : ${recetas}" class="recipe-card" 
+                             th:data-difficulty="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
+                             th:data-time="${receta.tiempoCoccion}"
+                             th:data-type="${receta.tipoCocina?.toLowerCase()}"
+                             th:data-keywords="${receta.titulo?.toLowerCase() + ' ' + receta.tipoCocina?.toLowerCase() + ' ' + receta.paisOrigen?.toLowerCase()}">
                         <div class="card-header">
-                            <span class="recipe-icon">🥗</span>
-                            <h3>Bowl Tropical</h3>
+                            <span class="recipe-icon">
+                                <span th:if="${receta.tipoCocina == 'Mexicana'}">🌮</span>
+                                <span th:if="${receta.tipoCocina == 'Española'}">🥘</span>
+                                <span th:if="${receta.tipoCocina == 'Italiana'}">🍝</span>
+                                <span th:if="${receta.tipoCocina == 'Japonesa'}">🍣</span>
+                                <span th:if="${receta.tipoCocina == 'Peruana'}">🐟</span>
+                                <span th:unless="${receta.tipoCocina == 'Mexicana' or receta.tipoCocina == 'Española' or receta.tipoCocina == 'Italiana' or receta.tipoCocina == 'Japonesa' or receta.tipoCocina == 'Peruana'}">🍽️</span>
+                            </span>
+                            <h3 th:text="${receta.titulo}">Título de la receta</h3>
                         </div>
                         <div class="card-content">
                             <div class="recipe-meta">
-                                <span>⏰ 15 min</span>
-                                <span>🍽️ 4 porciones</span>
+                                <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 45 min</span>
+                                <span th:text="'⭐ ' + ${receta.popularidad}">⭐ 4.5</span>
+                                <span th:text="'🌍 ' + ${receta.paisOrigen}">🌍 País</span>
                             </div>
-                            <div class="ingredients">
+                            <div class="ingredients" th:if="${receta.ingredientes != null and !receta.ingredientes.isEmpty()}">
                                 <h4>Ingredientes principales</h4>
                                 <ul>
-                                    <li>Piña fresca</li>
-                                    <li>Mango maduro</li>
-                                    <li>Fresas rojas</li>
-                                    <li>Coco rallado</li>
+                                    <li th:each="ingrediente, iterStat : ${receta.ingredientes}"
+                                        th:if="${iterStat.index < 4}"
+                                        th:text="${ingrediente.nombre + ' (' + ingrediente.cantidad + ' ' + ingrediente.unidadMedida + ')'}">
+                                        Ingrediente
+                                    </li>
                                 </ul>
                             </div>
                             <div class="preparation">
                                 <h4>Preparación</h4>
-                                <p>Corta todas las frutas, mezcla con coco y un toque de miel. ¡Perfecto para días calurosos!</p>
+                                <p th:text="${#strings.abbreviate(receta.instrucciones, 100)}">Instrucciones de preparación...</p>
                             </div>
-                            <span class="difficulty easy">Principiante</span>
+                            <span class="difficulty" 
+                                  th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
+                                  th:text="${receta.dificultad == 'BAJA' ? 'Principiante' : (receta.dificultad == 'MEDIA' ? 'Intermedio' : 'Avanzado')}">
+                                Principiante
+                            </span>
+                            
+                            <!-- Botón para añadir a lista (solo si está autenticado) -->
+                            <div th:if="${authenticated}" class="recipe-actions">
+                                <button class="add-to-list-btn" 
+                                        th:data-recipe-id="${receta.idReceta}"
+                                        th:data-recipe-title="${receta.titulo}"
+                                        onclick="addToMyList(this.dataset.recipeId, this.dataset.recipeTitle)"
+                                        title="Añadir a mi lista de recetas">
+                                    <span class="btn-icon">❤️</span>
+                                    Añadir a mis favoritas
+                                </button>
+                            </div>
+                            
+                            <!-- Mensaje para usuarios no autenticados -->
+                            <div th:unless="${authenticated}" class="login-prompt">
+                                <p class="prompt-text">
+                                    <span class="prompt-icon">🔒</span>
+                                    <a href="/login" class="prompt-link">Inicia sesión</a> para guardar tus recetas favoritas
+                                </p>
+                            </div>
                         </div>
                     </article>
 
-                    <article class="recipe-card" data-difficulty="easy" data-time="10" data-type="bebida" data-keywords="verde smoothie espinaca plátano manzana leche almendra yogur miel energético">
-                        <div class="card-header">
-                            <span class="recipe-icon">🥤</span>
-                            <h3>Elixir Verde</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="recipe-meta">
-                                <span>⏰ 10 min</span>
-                                <span>🥤 2 vasos</span>
+                    <!-- En caso de que no haya recetas del backend, mostrar las estáticas como fallback -->
+                    <div th:if="${recetas == null or recetas.isEmpty()}">
+                        <article class="recipe-card" data-difficulty="easy" data-time="15" data-type="ensalada" data-keywords="frutas tropical piña mango fresas papaya limón menta">
+                            <div class="card-header">
+                                <span class="recipe-icon">🥗</span>
+                                <h3>Bowl Tropical</h3>
                             </div>
-                            <div class="ingredients">
-                                <h4>Ingredientes principales</h4>
-                                <ul>
-                                    <li>Espinaca fresca</li>
-                                    <li>Plátano maduro</li>
-                                    <li>Manzana verde</li>
-                                    <li>Leche de almendras</li>
-                                </ul>
+                            <div class="card-content">
+                                <div class="recipe-meta">
+                                    <span>⏰ 15 min</span>
+                                    <span>🍽️ 4 porciones</span>
+                                </div>
+                                <div class="ingredients">
+                                    <h4>Ingredientes principales</h4>
+                                    <ul>
+                                        <li>Piña fresca</li>
+                                        <li>Mango maduro</li>
+                                        <li>Fresas rojas</li>
+                                        <li>Coco rallado</li>
+                                    </ul>
+                                </div>
+                                <div class="preparation">
+                                    <h4>Preparación</h4>
+                                    <p>Corta todas las frutas, mezcla con coco y un toque de miel. ¡Perfecto para días calurosos!</p>
+                                </div>
+                                <span class="difficulty easy">Principiante</span>
                             </div>
-                            <div class="preparation">
-                                <h4>Preparación</h4>
-                                <p>Licúa todos los ingredientes hasta obtener una textura suave. Rico en vitaminas y minerales.</p>
-                            </div>
-                            <span class="difficulty easy">Principiante</span>
-                        </div>
-                    </article>
+                        </article>
 
-                    <article class="recipe-card" data-difficulty="medium" data-time="30" data-type="sopa" data-keywords="verduras zanahorias papas brócoli cebolla tomates caldo jardín">
-                        <div class="card-header">
-                            <span class="recipe-icon">🍲</span>
-                            <h3>Sopa del Jardín</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="recipe-meta">
-                                <span>⏰ 30 min</span>
-                                <span>🍽️ 6 porciones</span>
+                        <article class="recipe-card" data-difficulty="easy" data-time="10" data-type="bebida" data-keywords="verde smoothie espinaca plátano manzana leche almendra yogur miel energético">
+                            <div class="card-header">
+                                <span class="recipe-icon">🥤</span>
+                                <h3>Elixir Verde</h3>
                             </div>
-                            <div class="ingredients">
-                                <h4>Ingredientes principales</h4>
-                                <ul>
-                                    <li>Zanahorias frescas</li>
-                                    <li>Papas amarillas</li>
-                                    <li>Brócoli tierno</li>
-                                    <li>Caldo de verduras</li>
-                                </ul>
+                            <div class="card-content">
+                                <div class="recipe-meta">
+                                    <span>⏰ 10 min</span>
+                                    <span>🥤 2 vasos</span>
+                                </div>
+                                <div class="ingredients">
+                                    <h4>Ingredientes principales</h4>
+                                    <ul>
+                                        <li>Espinaca fresca</li>
+                                        <li>Plátano maduro</li>
+                                        <li>Manzana verde</li>
+                                        <li>Leche de almendras</li>
+                                    </ul>
+                                </div>
+                                <div class="preparation">
+                                    <h4>Preparación</h4>
+                                    <p>Licúa todos los ingredientes hasta obtener una textura suave. Rico en vitaminas y minerales.</p>
+                                </div>
+                                <span class="difficulty easy">Principiante</span>
                             </div>
-                            <div class="preparation">
-                                <h4>Preparación</h4>
-                                <p>Sofríe las verduras, añade caldo y cocina a fuego lento. Una sopa reconfortante y nutritiva.</p>
-                            </div>
-                            <span class="difficulty medium">Intermedio</span>
-                        </div>
-                    </article>
-
-                    <article class="recipe-card" data-difficulty="medium" data-time="45" data-type="postre" data-keywords="postre tarta frutos rojos fresas arándanos frambuesas crema miel">
-                        <div class="card-header">
-                            <span class="recipe-icon">🍰</span>
-                            <h3>Tarta de Ensueño</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="recipe-meta">
-                                <span>⏰ 45 min</span>
-                                <span>🍽️ 8 porciones</span>
-                            </div>
-                            <div class="ingredients">
-                                <h4>Ingredientes principales</h4>
-                                <ul>
-                                    <li>Base de tarta</li>
-                                    <li>Crema fresca</li>
-                                    <li>Frutos rojos mixtos</li>
-                                    <li>Miel natural</li>
-                                </ul>
-                            </div>
-                            <div class="preparation">
-                                <h4>Preparación</h4>
-                                <p>Prepara la crema, cubre la base y decora con frutos. Un postre elegante y delicioso.</p>
-                            </div>
-                            <span class="difficulty medium">Intermedio</span>
-                        </div>
-                    </article>
+                        </article>
+                    </div>
                 </div>
                 
                 <!-- Mensaje cuando no hay resultados -->
@@ -365,6 +403,39 @@
                 searchRecipes();
             }
         });
+        
+        // Funciones para usuarios autenticados
+        function addToMyList(idReceta, titulo) {
+            // TODO: Integrar con backend para añadir a lista de favoritas
+            alert('¡"' + titulo + '" se añadió a tu lista de favoritas! (Funcionalidad no implementada aún)');
+        }
+        
+        async function handleLogoutFromHome() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                try {
+                    const response = await fetch('/api/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Recargar la página para actualizar el estado de autenticación
+                        window.location.reload();
+                    } else {
+                        alert('Error al cerrar sesión: ' + result.message);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    // Recargar de cualquier forma
+                    window.location.reload();
+                }
+            }
+        }
     </script>
 </body>
 </html>

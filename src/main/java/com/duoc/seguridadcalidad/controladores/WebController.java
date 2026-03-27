@@ -32,7 +32,48 @@ public class WebController {
      * Página principal
      */
     @GetMapping("/")
-    public String inicio() {
+    public String inicio(Model model, HttpSession session) {
+        // Verificar si hay sesión activa
+        String jwtToken = (String) session.getAttribute("jwtToken");
+        String username = (String) session.getAttribute("username");
+        
+        if (jwtToken != null && username != null) {
+            // Usuario autenticado
+            model.addAttribute("authenticated", true);
+            model.addAttribute("username", username);
+        } else {
+            // Usuario no autenticado
+            model.addAttribute("authenticated", false);
+        }
+        
+        try {
+            // Obtener recetas del backend
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BACKEND_URL + "/recipes"))
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                // Parsear las recetas usando ObjectMapper
+                com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>> typeRef = 
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>() {};
+                
+                java.util.List<java.util.Map<String, Object>> recetas = objectMapper.readValue(response.body(), typeRef);
+                model.addAttribute("recetas", recetas);
+            } else {
+                model.addAttribute("recetas", java.util.Collections.emptyList());
+                model.addAttribute("error", "No se pudieron cargar las recetas del backend");
+            }
+        } catch (Exception e) {
+            // En caso de error, mostrar lista vacía
+            model.addAttribute("recetas", java.util.Collections.emptyList());
+            model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
+        }
+        
         return "inicio";
     }
 

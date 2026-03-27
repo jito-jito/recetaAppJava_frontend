@@ -807,3 +807,51 @@ body {
 .time {
     color: #636e72;
 }
+
+/* ========================================
+   ESTILOS ESPECÍFICOS PARA VISTA DETALLE 
+   ======================================== */
+
+/* Estilo para fotos de recetas */
+.recipe-photo {
+    font-size: 24px;
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+    border-radius: 12px;
+    margin: 15px 0;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegurar que las listas se vean bien en detalle */
+.recipe-card .preparation ol {
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+.recipe-card .preparation ol li {
+    margin: 8px 0;
+    color: #636e72;
+    line-height: 1.5;
+}
+
+/* Estilo para elementos de preparación en detalle */
+.preparation h4 {
+    color: #2d3436;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ingredients h4 {
+    color: #2d3436;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Espaciado adicional entre tarjetas en vista detalle */
+.recipes-section .recipe-card {
+    margin-bottom: 30px;
+}
