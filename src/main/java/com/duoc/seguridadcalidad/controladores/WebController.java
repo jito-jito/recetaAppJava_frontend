@@ -4,6 +4,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.ResponseEntity;
@@ -91,7 +93,7 @@ public class WebController {
     }
 
     /**
-     * Página de detalles de recetas (protegida)
+     * Página de detalles de recetas (protegida) - muestra favoritos del usuario
      */
     @GetMapping("/detalle")
     public String detalle(HttpSession session, Model model) {
@@ -107,6 +109,35 @@ public class WebController {
         // Agregar información del usuario al modelo
         model.addAttribute("username", username);
         model.addAttribute("authenticated", true);
+        
+        try {
+            // Obtener recetas favoritas del usuario
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos"))
+                .header("Accept", "application/json")
+                .header("Authorization", token)
+                .GET()
+                .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                // Parsear las recetas favoritas
+                com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>> typeRef = 
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>() {};
+                
+                java.util.List<java.util.Map<String, Object>> favoritos = objectMapper.readValue(response.body(), typeRef);
+                model.addAttribute("recetas", favoritos);
+            } else {
+                model.addAttribute("recetas", java.util.Collections.emptyList());
+                model.addAttribute("error", "No se pudieron cargar las recetas favoritas");
+            }
+        } catch (Exception e) {
+            // En caso de error, mostrar lista vacía
+            model.addAttribute("recetas", java.util.Collections.emptyList());
+            model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
+        }
         
         return "detalle";
     }
@@ -211,5 +242,132 @@ public class WebController {
         }
         
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Endpoint para agregar receta a favoritos
+     */
+    @PostMapping("/api/favoritos/{recetaId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> agregarFavorito(@PathVariable Long recetaId, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        
+        // Verificar autenticación
+        String token = (String) session.getAttribute("jwtToken");
+        if (token == null) {
+            response.put("success", false);
+            response.put("message", "No autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        try {
+            // Hacer petición al backend
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos/" + recetaId))
+                .header("Content-Type", "application/json")
+                .header("Authorization", token)
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+            
+            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (backendResponse.statusCode() == 200) {
+                response.put("success", true);
+                response.put("message", "Receta agregada a favoritos exitosamente");
+                response.put("recetaId", recetaId);
+            } else {
+                response.put("success", false);
+                response.put("message", "Error al agregar a favoritos");
+            }
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error de conexión: " + e.getMessage());
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Endpoint para quitar receta de favoritos
+     */
+    @DeleteMapping("/api/favoritos/{recetaId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> quitarFavorito(@PathVariable Long recetaId, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        
+        // Verificar autenticación
+        String token = (String) session.getAttribute("jwtToken");
+        if (token == null) {
+            response.put("success", false);
+            response.put("message", "No autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        try {
+            // Hacer petición al backend
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos/" + recetaId))
+                .header("Content-Type", "application/json")
+                .header("Authorization", token)
+                .DELETE()
+                .build();
+            
+            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (backendResponse.statusCode() == 200) {
+                response.put("success", true);
+                response.put("message", "Receta quitada de favoritos exitosamente");
+                response.put("recetaId", recetaId);
+            } else {
+                response.put("success", false);
+                response.put("message", "Error al quitar de favoritos");
+            }
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error de conexión: " + e.getMessage());
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Endpoint para obtener recetas favoritas del usuario
+     */
+    @GetMapping("/api/favoritos")
+    @ResponseBody
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> obtenerFavoritos(HttpSession session) {
+        // Verificar autenticación
+        String token = (String) session.getAttribute("jwtToken");
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Collections.emptyList());
+        }
+        
+        try {
+            // Hacer petición al backend
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos"))
+                .header("Accept", "application/json")
+                .header("Authorization", token)
+                .GET()
+                .build();
+            
+            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (backendResponse.statusCode() == 200) {
+                // Parsear las recetas favoritas
+                com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>> typeRef = 
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>() {};
+                
+                java.util.List<java.util.Map<String, Object>> favoritos = objectMapper.readValue(backendResponse.body(), typeRef);
+                return ResponseEntity.ok(favoritos);
+            } else {
+                return ResponseEntity.ok(java.util.Collections.emptyList());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
     }
 }

@@ -855,3 +855,56 @@ body {
 .recipes-section .recipe-card {
     margin-bottom: 30px;
 }
+
+/* Estilos para estado vacío (sin favoritos) */
+.no-favorites {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.empty-icon {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.empty-state p {
+    color: #636e72;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.link-primary {
+    color: #74b9ff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.link-primary:hover {
+    color: #0984e3;
+    text-decoration: underline;
+}
+
+/* Alerta de error */
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert-danger {
+    background-color: rgba(214, 48, 49, 0.1);
+    color: #d63031;
+    border: 1px solid rgba(214, 48, 49, 0.2);
+}

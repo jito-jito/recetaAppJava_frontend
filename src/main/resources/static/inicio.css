@@ -147,6 +147,41 @@ body {
     box-shadow: 0 6px 15px rgba(253, 121, 168, 0.3);
 }
 
+.add-to-list-btn.added-to-favorites {
+    background: linear-gradient(135deg, #00b894, #00a085);
+    cursor: default;
+    opacity: 0.8;
+}
+
+.add-to-list-btn.added-to-favorites:hover {
+    transform: none;
+    box-shadow: 0 2px 10px rgba(0, 184, 148, 0.3);
+}
+
+/* Botón para quitar de favoritos */
+.remove-from-list-btn {
+    background: linear-gradient(135deg, #e17055, #d63031);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(214, 48, 49, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.remove-from-list-btn:hover {
+    background: linear-gradient(135deg, #d63031, #c44569);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(214, 48, 49, 0.4);
+}
+
 .add-to-list-btn .btn-icon {
     font-size: 16px;
 }

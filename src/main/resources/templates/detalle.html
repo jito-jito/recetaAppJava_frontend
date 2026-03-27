@@ -51,93 +51,71 @@
 
     <section class="recipes-section">
         <div class="container">
-            <div class="recipes-grid">
-                <!-- Receta 1 -->
-                <article class="recipe-card">
+            <!-- Mostrar mensaje si hay error -->
+            <div th:if="${error}" class="alert alert-danger">
+                <p th:text="${error}">Error al cargar las recetas</p>
+            </div>
+            
+            <!-- Mostrar recetas favoritas si existen -->
+            <div th:if="${recetas != null and !recetas.isEmpty()}" class="recipes-grid">
+                <article class="recipe-card" th:each="receta : ${recetas}">
                     <div class="card-header">
-                        <span class="recipe-icon">🥗</span>
-                        <h3>Bowl de Frutas Tropicales</h3>
+                        <span class="recipe-icon">🍽️</span>
+                        <h3 th:text="${receta.titulo}">Título de la receta</h3>
                     </div>
                     <div class="card-content">
                         <div class="recipe-meta">
-                            <span>⏰ 15 minutos</span>
-                            <span>🟢 Fácil</span>
-                            <span>🍽️ 4 porciones</span>
+                            <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 30 min</span>
+                            <span th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
+                                  th:text="${receta.dificultad == 'BAJA' ? '🟢 Fácil' : (receta.dificultad == 'MEDIA' ? '🟡 Medio' : '🔴 Difícil')}">🟢 Fácil</span>
+                            <span th:text="'📍 ' + ${receta.paisOrigen}">📍 País</span>
                         </div>
                         
-                        <div class="recipe-photo">🥥🥭🍓🍍</div>
+                        <div class="recipe-photo" th:text="'🍽️ ' + ${receta.tipoCocina}">🍽️ Tipo de cocina</div>
                         
-                        <div class="ingredients">
+                        <div class="ingredients" th:if="${receta.ingredientes != null and !receta.ingredientes.isEmpty()}">
                             <h4>Ingredientes:</h4>
                             <ul>
-                                <li>2 tazas de piña fresca cortada</li>
-                                <li>1 mango maduro en cubos</li>
-                                <li>1 taza de fresas cortadas</li>
-                                <li>½ taza de coco rallado</li>
-                                <li>2 cucharadas de miel</li>
-                                <li>Jugo de 1 limón</li>
-                                <li>Hojas de menta fresca</li>
+                                <li th:each="ingrediente : ${receta.ingredientes}" 
+                                    th:text="${ingrediente.cantidad} + ' ' + ${ingrediente.unidadMedida} + ' de ' + ${ingrediente.nombre}">
+                                    Ingrediente
+                                </li>
                             </ul>
                         </div>
                         
                         <div class="preparation">
                             <h4>Instrucciones:</h4>
-                            <ol>
-                                <li>Lava y corta todas las frutas en trozos uniformes</li>
-                                <li>En un bowl grande, mezcla las frutas cortadas</li>
-                                <li>Añade el coco rallado y rocía con miel</li>
-                                <li>Exprime el limón sobre las frutas</li>
-                                <li>Mezcla suavemente y decora con menta</li>
-                                <li>Refrigera por 15 minutos antes de servir</li>
-                            </ol>
+                            <p th:text="${receta.instrucciones}">Instrucciones de preparación...</p>
                         </div>
                         
-                        <span class="difficulty easy">Principiante</span>
+                        
+                        <span class="difficulty" 
+                        th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
+                        th:text="${receta.dificultad == 'BAJA' ? 'Principiante' : (receta.dificultad == 'MEDIA' ? 'Intermedio' : 'Avanzado')}">
+                        Principiante
+                    </span>
+                    <!-- Botón para quitar de favoritos -->
+                    <div class="recipe-actions">
+                        <button class="remove-from-list-btn" 
+                                th:data-recipe-id="${receta.idReceta}"
+                                th:data-recipe-title="${receta.titulo}"
+                                onclick="removeFromFavorites(this.dataset.recipeId, this.dataset.recipeTitle)"
+                                title="Quitar de mis recetas favoritas">
+                            <span class="btn-icon">💔</span>
+                            Quitar de favoritas
+                        </button>
+                    </div>
                     </div>
                 </article>
-                <!-- Receta 2 -->
-                <article class="recipe-card">
-                    <div class="card-header">
-                        <span class="recipe-icon">🥤</span>
-                        <h3>Smoothie Verde Detox</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="recipe-meta">
-                            <span>⏰ 10 minutos</span>
-                            <span>🟢 Fácil</span>
-                            <span>🥤 2 vasos</span>
-                        </div>
-                        
-                        <div class="recipe-photo">🥬🍌🥛✨</div>
-                        
-                        <div class="ingredients">
-                            <h4>Ingredientes:</h4>
-                            <ul>
-                                <li>2 tazas de espinaca fresca</li>
-                                <li>1 plátano maduro</li>
-                                <li>½ manzana verde</li>
-                                <li>1 taza de agua de coco</li>
-                                <li>½ taza de yogur natural</li>
-                                <li>1 cucharada de miel</li>
-                                <li>Cubitos de hielo</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="preparation">
-                            <h4>Instrucciones:</h4>
-                            <ol>
-                                <li>Lava bien las espinacas y la manzana</li>
-                                <li>Pela el plátano y corta en trozos</li>
-                                <li>Añade todos los líquidos a la licuadora</li>
-                                <li>Incorpora las frutas y verduras</li>
-                                <li>Licúa por 60 segundos hasta que esté suave</li>
-                                <li>Sirve inmediatamente con hielo</li>
-                            </ol>
-                        </div>
-                        
-                        <span class="difficulty easy">Principiante</span>
-                    </div>
-                </article>
+            </div>
+            
+            <!-- Mostrar mensaje cuando no hay recetas favoritas -->
+            <div th:if="${recetas == null or recetas.isEmpty()}" class="no-favorites">
+                <div class="empty-state">
+                    <span class="empty-icon">💔</span>
+                    <h3>No tienes recetas favoritas aún</h3>
+                    <p>Ve a la <a href="/" class="link-primary">página de inicio</a> y agrega algunas recetas a tu lista de favoritas.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -180,29 +158,39 @@
             }
         }
     }
+    
+    // Función para quitar de favoritos
+    async function removeFromFavorites(idReceta, titulo) {
+        if (confirm(`¿Estás seguro de que quieres quitar "${titulo}" de tus favoritas?`)) {
+            try {
+                const response = await fetch(`/api/favoritos/${idReceta}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-    // Verificar autenticación al cargar la página
-    document.addEventListener('DOMContentLoaded', async function() {
-        try {
-            const response = await fetch('/api/check-auth', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(`"${titulo}" ha sido quitada de tus favoritas.`);
+                        // Recargar la página para mostrar la lista actualizada
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                } else if (response.status === 401) {
+                    alert('Tu sesión ha expirado. Redirigiendo al login...');
+                    window.location.href = '/login';
+                } else {
+                    throw new Error(`Error ${response.status}`);
                 }
-            });
-            
-            const result = await response.json();
-            
-            if (!result.authenticated) {
-                // Si no está autenticado, redireccionar al login
-                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error al quitar favorito:', error);
+                alert('Error de conexión. Inténtalo de nuevo.');
             }
-        } catch (error) {
-            console.error('Error checking authentication:', error);
-            // En caso de error, redireccionar al login por seguridad
-            window.location.href = '/login';
         }
-    });
+    }
 </script>
 
 </body> 
