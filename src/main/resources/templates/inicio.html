@@ -188,7 +188,18 @@
                             
                             <!-- Botón para añadir a lista (solo si está autenticado) -->
                             <div th:if="${authenticated}" class="recipe-actions">
-                                <button class="add-to-list-btn" 
+                                <!-- Si ya está en favoritos, mostrar botón deshabilitado -->
+                                <button th:if="${favoritosIds.contains(receta.idReceta)}" 
+                                        class="add-to-list-btn added-to-favorites" 
+                                        disabled="true"
+                                        title="Esta receta ya está en tus favoritas">
+                                    <span class="btn-icon">✅</span>
+                                    En favoritas
+                                </button>
+                                
+                                <!-- Si no está en favoritos, mostrar botón activo -->
+                                <button th:unless="${favoritosIds.contains(receta.idReceta)}"
+                                        class="add-to-list-btn" 
                                         th:data-recipe-id="${receta.idReceta}"
                                         th:data-recipe-title="${receta.titulo}"
                                         onclick="addToMyList(this.dataset.recipeId, this.dataset.recipeTitle, this)"

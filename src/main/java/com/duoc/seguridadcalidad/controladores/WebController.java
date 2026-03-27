@@ -66,13 +66,49 @@ public class WebController {
                 
                 java.util.List<java.util.Map<String, Object>> recetas = objectMapper.readValue(response.body(), typeRef);
                 model.addAttribute("recetas", recetas);
+                
+                // Si el usuario está autenticado, también obtener sus favoritos
+                if (jwtToken != null) {
+                    try {
+                        HttpRequest favoritosRequest = HttpRequest.newBuilder()
+                            .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos"))
+                            .header("Accept", "application/json")
+                            .header("Authorization", jwtToken)
+                            .GET()
+                            .build();
+                        
+                        HttpResponse<String> favoritosResponse = client.send(favoritosRequest, HttpResponse.BodyHandlers.ofString());
+                        
+                        if (favoritosResponse.statusCode() == 200) {
+                            // Parsear favoritos y crear lista de IDs
+                            java.util.List<java.util.Map<String, Object>> favoritos = objectMapper.readValue(favoritosResponse.body(), typeRef);
+                            java.util.Set<Object> favoritosIds = new java.util.HashSet<>();
+                            
+                            for (java.util.Map<String, Object> favorito : favoritos) {
+                                favoritosIds.add(favorito.get("idReceta"));
+                            }
+                            
+                            model.addAttribute("favoritosIds", favoritosIds);
+                        } else {
+                            model.addAttribute("favoritosIds", java.util.Collections.emptySet());
+                        }
+                    } catch (Exception e) {
+                        // Si hay error obteniendo favoritos, continuar sin ellos
+                        model.addAttribute("favoritosIds", java.util.Collections.emptySet());
+                    }
+                } else {
+                    model.addAttribute("favoritosIds", java.util.Collections.emptySet());
+                }
+                
             } else {
                 model.addAttribute("recetas", java.util.Collections.emptyList());
+                model.addAttribute("favoritosIds", java.util.Collections.emptySet());
                 model.addAttribute("error", "No se pudieron cargar las recetas del backend");
             }
         } catch (Exception e) {
             // En caso de error, mostrar lista vacía
             model.addAttribute("recetas", java.util.Collections.emptyList());
+            model.addAttribute("favoritosIds", java.util.Collections.emptySet());
             model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
         }
         
