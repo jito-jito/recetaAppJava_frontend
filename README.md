@@ -1,271 +1,115 @@
-# API Backend de Recetas 🍽️
+# RecetaApp - Frontend 🍳
 
-Proyecto transformado de aplicación web tradicional a API REST para gestión de recetas con autenticación JWT.
+## Descripción
+RecetaApp es una aplicación frontend desarrollada con Spring Boot y Thymeleaf que presenta una colección de recetas saludables. Esta aplicación sirve contenido estático y plantillas HTML sin conexión a base de datos.
 
-## 🏗️ Arquitectura
+## Características
+- 🎨 **Interfaz moderna**: Diseño responsivo con CSS personalizado
+- 🍽️ **Páginas de recetas**: Colección de recetas con ingredientes e instrucciones
+- 🔐 **Página de login**: Frontend para conectar con backend de autenticación
+- 📱 **Responsive**: Compatible con dispositivos móviles
 
-Este proyecto ha sido convertido de una aplicación web monolítica con Thymeleaf a un **backend API REST puro** siguiendo la metodología del [repositorio de referencia](https://github.com/chri-alvarez/isy2202-backend-2026-201).
-
-### Tecnologías Utilizadas
-
-- **Java 17** con **Spring Boot 3.1.12**
-- **Spring Security** con autenticación JWT
-- **Spring Data JPA** con base de datos H2 (en memoria)
-- **Maven** como gestor de dependencias
-- **JJWT** para manejo de tokens JWT
-
-## 🚀 Configuración y Ejecución
-
-### Requisitos Previos
-
-- Java 17
-- Maven 3.6+
-
-### Ejecutar la Aplicación
-
-```bash
-mvn spring-boot:run
+## Estructura del Proyecto
+```
+src/
+├── main/
+│   ├── java/
+│   │   └── com/duoc/seguridadcalidad/
+│   │       ├── SeguridadcalidadApplication.java  # Aplicación principal
+│   │       └── controladores/
+│   │           └── WebController.java            # Controlador para páginas
+│   └── resources/
+│       ├── static/                              # Archivos CSS
+│       │   ├── style.css                        # Estilos principales
+│       │   ├── inicio.css                       # Estilos página inicio
+│       │   ├── login.css                        # Estilos página login
+│       │   └── detalle.css                      # Estilos página detalle
+│       ├── templates/                           # Plantillas Thymeleaf
+│       │   ├── inicio.html                      # Página principal
+│       │   ├── login.html                       # Página de login
+│       │   └── detalle.html                     # Página de recetas
+│       └── application.properties               # Configuración
 ```
 
-La aplicación se ejecutará en `http://localhost:8080`
+## Tecnologías Utilizadas
+- **Spring Boot 3.1.12**: Framework principal
+- **Thymeleaf**: Motor de plantillas
+- **Maven**: Gestión de dependencias
+- **Java 17**: Versión de Java
 
-### Base de Datos de Desarrollo
+## Instalación y Ejecución
 
-- **Base de datos:** H2 (en memoria)
-- **Console H2:** `http://localhost:8080/h2-console`
-  - **URL JDBC:** `jdbc:h2:mem:recetadb`
-  - **Usuario:** `sa`
-  - **Contraseña:** (vacía)
+### Prerrequisitos
+- Java 17 o superior
+- Maven (incluido con wrapper)
 
-## 📡 API Endpoints
+### Pasos de instalación
+1. **Clonar el repositorio**
+   ```bash
+   git clone [url-del-repositorio]
+   cd recetaAppJava-frontend
+   ```
 
-### 🏠 Información General
+2. **Compilar el proyecto**
+   ```bash
+   ./mvnw clean compile
+   ```
 
-```http
-GET / 
-```
-Información general del API
+3. **Ejecutar la aplicación**
+   ```bash
+   ./mvnw spring-boot:run
+   ```
 
-```http
-GET /health
-```
-Check de salud del servicio
+4. **Acceder a la aplicación**
+   - URL: `http://localhost:8080`
+   - Puerto: 8080 (configurable en application.properties)
 
-### 🔐 Autenticación
+## Páginas Disponibles
+- **/** - Página principal con recetas destacadas
+- **/login** - Página de autenticación (frontend)
+- **/detalle** - Página con recetas detalladas
 
-#### Login
-```http
-POST /login
-Content-Type: application/json
-
-{
-  "username": "admin",
-  "password": "password"
-}
-```
-
-**Respuesta:**
-```
-Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXSwic3ViIjoidXNlciIsImlhdCI6MTcwOTg3NjU0MywiZXhwIjoxNzEwNzQwNTQzfQ.4X1lAX8gfxJoGQpVrEd5aePcRHgE_3yT7F6nRfB8lY0
-```
-
-#### Registro
-```http
-POST /api/usuarios/register
-Content-Type: application/json
-
-{
-  "username": "nuevo_usuario",
-  "email": "usuario@email.com",
-  "password": "mi_password"
-}
-```
-
-### 🍽️ Gestión de Recetas
-
-> **Nota:** Los endpoints de modificación requieren autenticación (token JWT en header `Authorization: Bearer <token>`)
-
-#### Obtener todas las recetas
-```http
-GET /recipes
-```
-
-#### Obtener receta por ID
-```http
-GET /recipes/{id}
-```
-
-#### Buscar recetas
-```http
-GET /recipes/search?titulo=pasta&tipoCocina=italiana&paisOrigen=italia
-```
-
-Parámetros de búsqueda disponibles:
-- `titulo`: Búsqueda por título (contiene, case-insensitive)
-- `tipoCocina`: Tipo de cocina (contiene, case-insensitive)
-- `paisOrigen`: País de origen (contiene, case-insensitive)
-- `tiempoMaximo`: Tiempo máximo de cocción en minutos
-- `popularidadMinima`: Popularidad mínima (0.0-5.0)
-
-#### Recetas por popularidad
-```http
-GET /recipes/populares
-```
-
-#### Recetas recientes
-```http
-GET /recipes/recientes
-```
-
-#### Crear nueva receta
-```http
-POST /recipes
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "titulo": "Nueva Receta",
-  "tipoCocina": "Italiana",
-  "paisOrigen": "Italia",
-  "dificultad": "MEDIA",
-  "tiempoCoccion": 30,
-  "instrucciones": "Paso a paso...",
-  "popularidad": 4.5,
-  "fechaPublicacion": "2024-03-27",
-  "imagenes": ["url1.jpg", "url2.jpg"],
-  "ingredientes": [
-    {
-      "nombre": "Pasta",
-      "cantidad": 400,
-      "unidadMedida": "g"
-    }
-  ]
-}
-```
-
-#### Actualizar receta
-```http
-PUT /recipes/{id}
-Authorization: Bearer <token>
-Content-Type: application/json
-```
-
-#### Eliminar receta
-```http
-DELETE /recipes/{id}
-Authorization: Bearer <token>
-```
-
-### 👤 Gestión de Usuarios
-
-#### Obtener perfil
-```http
-GET /api/usuarios/profile?username=admin
-```
-
-## 📊 Modelo de Datos
-
-### Receta
-```json
-{
-  "idReceta": 1,
-  "titulo": "Tacos al Pastor",
-  "tipoCocina": "Mexicana",
-  "paisOrigen": "México",
-  "dificultad": "MEDIA",
-  "tiempoCoccion": 45,
-  "instrucciones": "Instrucciones paso a paso...",
-  "popularidad": 4.5,
-  "fechaPublicacion": "2024-03-15",
-  "imagenes": ["url1.jpg", "url2.jpg"],
-  "ingredientes": [
-    {
-      "nombre": "Carne de cerdo",
-      "cantidad": 1.0,
-      "unidadMedida": "kg"
-    }
-  ]
-}
-```
-
-### Niveles de Dificultad
-- `BAJA`
-- `MEDIA` 
-- `ALTA`
-
-## 🔒 Seguridad
-
-- **JWT Token:** Expira en 10 días
-- **Algoritmo:** HS256
-- **Endpoints públicos:** `GET /recipes/**`, `POST /login`, `POST /api/usuarios/register`
-- **Endpoints protegidos:** `POST`, `PUT`, `DELETE` en `/recipes/**`
-
-## 🌐 CORS
-
-CORS está habilitado en los controladores REST para permitir peticiones desde frontends externos.
-
-## 💾 Datos de Prueba
-
-La aplicación se inicializa con datos de prueba:
-
-**Usuarios:**
-- `admin / password`
-- `user / password`  
-- `chef / password`
-
-**Recetas:**
-- Tacos al Pastor (Mexicana)
-- Paella Valenciana (Española)
-- Pasta Carbonara (Italiana)
-- Sushi California Roll (Japonesa)
-- Ceviche Peruano (Peruana)
-
-## 🔧 Configuración de Desarrollo
-
-### Variables de Entorno (application.properties)
-
+## Configuración
+La aplicación se configura a través del archivo `application.properties`:
 ```properties
-# Base de datos H2
-spring.datasource.url=jdbc:h2:mem:recetadb
-spring.h2.console.enabled=true
+# Nombre de la aplicación
+spring.application.name=receta-frontend
 
 # Puerto del servidor
 server.port=8080
 
-# Logging para desarrollo
-logging.level.com.duoc.seguridadcalidad=DEBUG
+# Configuración de Thymeleaf
+spring.thymeleaf.cache=false
 ```
 
-## 📝 Notas de Migración
+## Desarrollo
 
-### Cambios Principales Realizados:
+### Estructura de archivos CSS
+- `style.css`: Variables CSS, reset y estilos base
+- `inicio.css`: Estilos específicos para la página principal
+- `login.css`: Estilos para formulario de login
+- `detalle.css`: Estilos para páginas de recetas detalladas
 
-1. ✅ **Eliminación de Thymeleaf** y dependencias de frontend
-2. ✅ **Implementación de JWT** para autenticación stateless  
-3. ✅ **Conversión de Controllers a RestControllers**
-4. ✅ **Configuración de CORS** para permitir frontends externos
-5. ✅ **Implementación completa de repositorios JPA**
-6. ✅ **Mejora de modelos** con anotaciones JPA apropiadas
-7. ✅ **Endpoint de salud** y información del API
-8. ✅ **Datos de prueba** mediante data.sql
+### Plantillas Thymeleaf
+Las plantillas HTML utilizan Thymeleaf para:
+- Referencias a archivos CSS: `th:href="@{/archivo.css}"`
+- Links entre páginas: `th:href="@{/ruta}"`
 
-### Para el Frontend Separado:
+## Integración con Backend
+Esta aplicación frontend está diseñada para conectarse con un backend separado que maneja:
+- Autenticación de usuarios
+- Gestión de datos de recetas
+- API REST endpoints
 
-El frontend deberá:
-1. Implementar autenticación JWT (almacenar token tras login)
-2. Enviar token en header `Authorization: Bearer <token>` para operaciones protegidas
-3. Consumir los endpoints REST documentados arriba
-4. Manejar estados de error HTTP apropiados
+**Nota**: La conexión a base de datos y autenticación se maneja en un repositorio backend separado.
 
-## 🚀 Próximos Pasos
+## Migración Completada
+✅ **Archivos estáticos migrados** desde `recetaAppFrontend-static/` a la estructura Spring Boot   
+✅ **Templates Thymeleaf** configurados y funcionando  
+✅ **Controlador Web** implementado para routing  
+✅ **Dependencias simplificadas** sin lógica de backend  
+✅ **Elimando Backend REST** para mantener solo frontend  
+✅ **Configuración limpiada** sin referencias a base de datos  
 
-1. Crear proyecto frontend separado que consuma esta API
-2. Implementar hashing de passwords con BCrypt (comentado en el código)
-3. Configurar base de datos persistente para producción
-4. Añadir paginación a los endpoints de listado
-5. Implementar cache con Redis para mejorar rendimiento
-
----
-
-**Desarrollado para:** Curso de Seguridad y Calidad en el Desarrollo - DuocUC  
-**Metodología:** Basada en https://github.com/chri-alvarez/isy2202-backend-2026-201
+## Soporte
+Para problemas o preguntas sobre la aplicación, contactar al equipo de desarrollo.

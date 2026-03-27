@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecetaApp - Inicio</title>
+    <link rel="stylesheet" th:href="@{/inicio.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">🔥</span>
+                <span class="brand-text">RecetaApp</span>
+            </div>
+            <div class="nav-actions">
+                <a href="/login" class="nav-btn">
+                    <span class="btn-icon">👤</span>
+                    Acceder
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="highlight">Descubre</span> sabores únicos
+            </h1>
+            <p class="hero-subtitle">
+                Recetas frescas y saludables para transformar tu cocina en un lugar especial
+            </p>
+            <div class="hero-badges">
+                <span class="badge">🌱 Natural</span>
+                <span class="badge">⚡ Rápido</span>
+                <span class="badge">💚 Saludable</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="intro-section">
+            <div class="container">
+                <h2>Un mundo de sabores te espera</h2>
+                <p>Cada receta es una aventura culinaria diseñada para nutrir tu cuerpo y despertar tus sentidos. 
+                Desde desayunos energizantes hasta cenas reconfortantes.</p>
+            </div>
+        </section>
+
+        <!-- Nueva sección de buscador -->
+        <section class="search-section">
+            <div class="container">
+                <div class="search-wrapper">
+                    <h2>Encuentra tu receta perfecta</h2>
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="searchInput" placeholder="Busca por nombre, ingrediente o tipo de comida..." class="search-input">
+                            <button class="search-btn" onclick="searchRecipes()">
+                                <span class="search-icon">🔍</span>
+                                Buscar
+                            </button>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="difficultyFilter">Dificultad</label>
+                                <select id="difficultyFilter" onchange="filterRecipes()">
+                                    <option value="">Todas</option>
+                                    <option value="easy">Fácil</option>
+                                    <option value="medium">Intermedio</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="timeFilter">Tiempo</label>
+                                <select id="timeFilter" onchange="filterRecipes()">
+                                    <option value="">Cualquiera</option>
+                                    <option value="quick">Rápido (&lt;20 min)</option>
+                                    <option value="medium">Moderado (20-40 min)</option>
+                                    <option value="long">Largo (&gt;40 min)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="typeFilter">Tipo</label>
+                                <select id="typeFilter" onchange="filterRecipes()">
+                                    <option value="">Todos</option>
+                                    <option value="ensalada">Ensaladas</option>
+                                    <option value="bebida">Bebidas</option>
+                                    <option value="sopa">Sopas</option>
+                                    <option value="postre">Postres</option>
+                                </select>
+                            </div>
+                            
+                            <button class="clear-filters-btn" onclick="clearFilters()">
+                                <span>🗑️</span>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="search-suggestions">
+                        <p>Búsquedas populares:</p>
+                        <div class="suggestion-tags">
+                            <span class="suggestion-tag" onclick="searchByKeyword('frutas')">Frutas 🍓</span>
+                            <span class="suggestion-tag" onclick="searchByKeyword('verde')">Verde 🥬</span>
+                            <span class="suggestion-tag" onclick="searchByKeyword('rápido')">Rápido ⚡</span>
+                            <span class="suggestion-tag" onclick="searchByKeyword('postre')">Postres 🍰</span>
+                            <span class="suggestion-tag" onclick="searchByKeyword('saludable')">Saludable 💚</span>
+                        </div>
+                    </div>
+                    
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="recipes-section">
+            <div class="container">
+                <div class="recipes-grid" id="recipesGrid">
+                    <article class="recipe-card" data-difficulty="easy" data-time="15" data-type="ensalada" data-keywords="frutas tropical piña mango fresas papaya limón menta">
+                        <div class="card-header">
+                            <span class="recipe-icon">🥗</span>
+                            <h3>Bowl Tropical</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="recipe-meta">
+                                <span>⏰ 15 min</span>
+                                <span>🍽️ 4 porciones</span>
+                            </div>
+                            <div class="ingredients">
+                                <h4>Ingredientes principales</h4>
+                                <ul>
+                                    <li>Piña fresca</li>
+                                    <li>Mango maduro</li>
+                                    <li>Fresas rojas</li>
+                                    <li>Coco rallado</li>
+                                </ul>
+                            </div>
+                            <div class="preparation">
+                                <h4>Preparación</h4>
+                                <p>Corta todas las frutas, mezcla con coco y un toque de miel. ¡Perfecto para días calurosos!</p>
+                            </div>
+                            <span class="difficulty easy">Principiante</span>
+                        </div>
+                    </article>
+
+                    <article class="recipe-card" data-difficulty="easy" data-time="10" data-type="bebida" data-keywords="verde smoothie espinaca plátano manzana leche almendra yogur miel energético">
+                        <div class="card-header">
+                            <span class="recipe-icon">🥤</span>
+                            <h3>Elixir Verde</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="recipe-meta">
+                                <span>⏰ 10 min</span>
+                                <span>🥤 2 vasos</span>
+                            </div>
+                            <div class="ingredients">
+                                <h4>Ingredientes principales</h4>
+                                <ul>
+                                    <li>Espinaca fresca</li>
+                                    <li>Plátano maduro</li>
+                                    <li>Manzana verde</li>
+                                    <li>Leche de almendras</li>
+                                </ul>
+                            </div>
+                            <div class="preparation">
+                                <h4>Preparación</h4>
+                                <p>Licúa todos los ingredientes hasta obtener una textura suave. Rico en vitaminas y minerales.</p>
+                            </div>
+                            <span class="difficulty easy">Principiante</span>
+                        </div>
+                    </article>
+
+                    <article class="recipe-card" data-difficulty="medium" data-time="30" data-type="sopa" data-keywords="verduras zanahorias papas brócoli cebolla tomates caldo jardín">
+                        <div class="card-header">
+                            <span class="recipe-icon">🍲</span>
+                            <h3>Sopa del Jardín</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="recipe-meta">
+                                <span>⏰ 30 min</span>
+                                <span>🍽️ 6 porciones</span>
+                            </div>
+                            <div class="ingredients">
+                                <h4>Ingredientes principales</h4>
+                                <ul>
+                                    <li>Zanahorias frescas</li>
+                                    <li>Papas amarillas</li>
+                                    <li>Brócoli tierno</li>
+                                    <li>Caldo de verduras</li>
+                                </ul>
+                            </div>
+                            <div class="preparation">
+                                <h4>Preparación</h4>
+                                <p>Sofríe las verduras, añade caldo y cocina a fuego lento. Una sopa reconfortante y nutritiva.</p>
+                            </div>
+                            <span class="difficulty medium">Intermedio</span>
+                        </div>
+                    </article>
+
+                    <article class="recipe-card" data-difficulty="medium" data-time="45" data-type="postre" data-keywords="postre tarta frutos rojos fresas arándanos frambuesas crema miel">
+                        <div class="card-header">
+                            <span class="recipe-icon">🍰</span>
+                            <h3>Tarta de Ensueño</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="recipe-meta">
+                                <span>⏰ 45 min</span>
+                                <span>🍽️ 8 porciones</span>
+                            </div>
+                            <div class="ingredients">
+                                <h4>Ingredientes principales</h4>
+                                <ul>
+                                    <li>Base de tarta</li>
+                                    <li>Crema fresca</li>
+                                    <li>Frutos rojos mixtos</li>
+                                    <li>Miel natural</li>
+                                </ul>
+                            </div>
+                            <div class="preparation">
+                                <h4>Preparación</h4>
+                                <p>Prepara la crema, cubre la base y decora con frutos. Un postre elegante y delicioso.</p>
+                            </div>
+                            <span class="difficulty medium">Intermedio</span>
+                        </div>
+                    </article>
+                </div>
+                
+                <!-- Mensaje cuando no hay resultados -->
+                <div id="noResults" class="no-results" style="display: none;">
+                    <div class="no-results-content">
+                        <span class="no-results-icon">🔍</span>
+                        <h3>No encontramos recetas</h3>
+                        <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="benefits-section">
+            <div class="container">
+                <h2>¿Por qué elegir lo natural?</h2>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">💪</div>
+                        <h3>Fortalece tu cuerpo</h3>
+                        <p>Vitaminas y minerales que nutren desde adentro</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🧠</div>
+                        <h3>Agudiza tu mente</h3>
+                        <p>Antioxidantes para una cognición superior</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">❤️</div>
+                        <h3>Cuida tu corazón</h3>
+                        <p>Salud cardiovascular en cada bocado</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">⚖️</div>
+                        <h3>Equilibra tu peso</h3>
+                        <p>Saciedad natural y energía duradera</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                © 2025 RecetaApp • Transformando cocinas, nutriendo vidas
+            </p>
+            <a href="/" class="footer-link">Volver al inicio</a>
+        </div>
+    </footer>
+
+    <script>
+        // Funciones de búsqueda y filtrado
+        function searchRecipes() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            filterRecipes(searchTerm);
+        }
+
+        function filterRecipes(searchTerm = '') {
+            const cards = document.querySelectorAll('.recipe-card');
+            const difficultyFilter = document.getElementById('difficultyFilter').value;
+            const timeFilter = document.getElementById('timeFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const currentSearchTerm = searchTerm || document.getElementById('searchInput').value.toLowerCase();
+            
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const difficulty = card.dataset.difficulty;
+                const time = parseInt(card.dataset.time);
+                const type = card.dataset.type;
+                const keywords = card.dataset.keywords.toLowerCase();
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                
+                let showCard = true;
+
+                // Filtro de búsqueda de texto
+                if (currentSearchTerm && !keywords.includes(currentSearchTerm) && !title.includes(currentSearchTerm)) {
+                    showCard = false;
+                }
+
+                // Filtro de dificultad
+                if (difficultyFilter && difficulty !== difficultyFilter) {
+                    showCard = false;
+                }
+
+                // Filtro de tiempo
+                if (timeFilter) {
+                    if (timeFilter === 'quick' && time >= 20) showCard = false;
+                    if (timeFilter === 'medium' && (time < 20 || time > 40)) showCard = false;
+                    if (timeFilter === 'long' && time <= 40) showCard = false;
+                }
+
+                // Filtro de tipo
+                if (typeFilter && type !== typeFilter) {
+                    showCard = false;
+                }
+
+                if (showCard) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Mostrar/ocultar mensaje de "no resultados"
+            const noResults = document.getElementById('noResults');
+            if (visibleCount === 0) {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+        }
+
+        function searchByKeyword(keyword) {
+            document.getElementById('searchInput').value = keyword;
+            searchRecipes();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('difficultyFilter').value = '';
+            document.getElementById('timeFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            filterRecipes();
+        }
+
+        // Búsqueda en tiempo real
+        document.getElementById('searchInput').addEventListener('input', function() {
+            setTimeout(filterRecipes, 300); // Debounce de 300ms
+        });
+
+        // Enter para buscar
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchRecipes();
+            }
+        });
+    </script>
+</body>
+</html>

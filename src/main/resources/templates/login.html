@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <title>RecetaApp - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" th:href="@{/login.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>🍳 RecetaApp</h1>
+                <p>Accede a tu cuenta</p>
+            </div>
+
+            <div class="login-form-container">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" placeholder="Ingresa tu usuario" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
+                </div>
+
+                <button type="button" class="login-btn" onclick="handleLogin()">
+                    Iniciar Sesión
+                </button>
+            </div>
+
+            <div class="login-footer">
+                <p>Esta página se conecta al backend para autenticación</p>
+                <p><a href="/">« Volver al inicio</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username && password) {
+                // Aquí se conectaría al backend para autenticación
+                alert('Conectando al backend para autenticación...');
+                // Redireccionar a detalle después del login
+                window.location.href = '/detalle';
+            } else {
+                alert('Por favor ingresa usuario y contraseña');
+            }
+        }
+    </script>
+</body>
+</html>
