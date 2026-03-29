@@ -4,7 +4,14 @@
     <title>RecetaApp - Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" th:href="@{/login.css}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- MITIGACIÓN: Sub Resource Integrity Attribute Missing -->
+    <!-- Agregado SRI y crossorigin para Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" 
+          rel="stylesheet" 
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer">
 </head>
 <body>
     <div class="login-wrapper">
@@ -25,74 +32,14 @@
                     <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
                 </div>
 
-                <button type="button" class="login-btn" onclick="handleLogin()">
+                <button type="button" class="login-btn" id="loginBtn">
                     Iniciar Sesión
                 </button>
             </div>
         </div>
     </div>
 
-    <script>
-        async function handleLogin() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            // Validar campos
-            if (!username || !password) {
-                alert('Por favor ingresa usuario y contraseña');
-                return;
-            }
-
-            // Deshabilitar botón durante la petición
-            const loginBtn = document.querySelector('.login-btn');
-            const originalText = loginBtn.textContent;
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Iniciando sesión...';
-            
-            try {
-                // Realizar petición al endpoint proxy del frontend
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('¡Login exitoso!');
-                    // Redireccionar usando la URL proporcionada por el backend
-                    window.location.href = result.redirectUrl || '/detalle';
-                } else {
-                    alert('Error en login: ' + result.message);
-                }
-                
-            } catch (error) {
-                console.error('Error de conexión:', error);
-                alert('Error de conexión: ' + error.message);
-            } finally {
-                // Restaurar botón
-                loginBtn.disabled = false;
-                loginBtn.textContent = originalText;
-            }
-        }
-
-        // Permitir login con Enter
-        document.addEventListener('DOMContentLoaded', function() {
-            const inputs = document.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        handleLogin();
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- JavaScript externalizado para cumplir CSP sin unsafe-inline -->
+    <script th:src="@{/login.js}"></script>
 </body>
 </html>
