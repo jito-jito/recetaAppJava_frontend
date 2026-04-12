@@ -201,3 +201,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+// Manejador global para ocultar multimedia rota
+document.addEventListener('error', function(e) {
+    if (e.target && e.target.tagName && (e.target.tagName.toLowerCase() === 'img' || e.target.tagName.toLowerCase() === 'video')) {
+        e.target.style.display = 'none';
+    }
+}, true);
+
+// Función para revisar imagenes que fallaron antes de que el script cargara
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('img.recipe-media-element, img.recipe-media-item').forEach(img => {
+        if (img.complete && img.naturalHeight === 0) {
+            img.style.display = 'none';
+        }
+    });
+});

@@ -33,6 +33,10 @@
                     ¡Hola, <strong th:text="${username}">Usuario</strong>!
                 </span>
                 <div class="user-menu">
+                    <a href="/crear-receta" class="nav-btn secondary" style="background:#4CAF50; color:white; border-color:#4CAF50;">
+                        <span class="btn-icon">➕</span>
+                        Crear Receta
+                    </a>
                     <a href="/" class="nav-btn secondary">
                         <span class="btn-icon">🏠</span>
                         Inicio
@@ -56,11 +60,98 @@
         </div>
     </section>
 
-    <section class="recipes-section">
+    <!-- SECCIÓN 1: MIS CREACIONES (Borradores y Publicadas) -->
+    <section class="recipes-section" id="mis-creaciones" style="padding-bottom: 2rem;">
         <div class="container">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 10px;">👨‍🍳 Mis Creaciones</h2>
+            
+            <div th:if="${errorMis}" class="alert alert-danger" style="margin-bottom: 20px;">
+                <p th:text="${errorMis}">Error al cargar</p>
+            </div>
+            
+            <!-- Mostrar creaciones si existen -->
+            <div th:if="${misRecetas != null and !misRecetas.isEmpty()}" class="recipes-grid">
+                <article class="recipe-card" th:each="receta : ${misRecetas}">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 th:text="${receta.titulo}" style="margin: 0;">Título de la receta</h3>
+                        <!-- Badge de estado -->
+                        <span class="badge" 
+                              th:classappend="${receta.publicada} ? 'badge-publicada' : 'badge-borrador'"
+                              th:text="${receta.publicada} ? '🌍 Pública' : '📝 Borrador'">
+                            Estado
+                        </span>
+                    </div>
+                    <div class="card-content">
+                        <!-- Visual media -->
+                        <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty()}" class="recipe-media-container">
+                            <img th:each="img : ${receta.imagenes}" 
+                                 th:src="${#strings.startsWith(img, 'http') ? img : 'http://localhost:8080' + img}" 
+                                 class="recipe-media-item" 
+                                 alt="Imagen de receta"/>
+                        </div>
+                        <div th:if="${receta.videos != null and !receta.videos.isEmpty()}" class="recipe-media-container">
+                            <video th:each="vid : ${receta.videos}" 
+                                   controls 
+                                   class="recipe-media-item">
+                                <source th:src="${#strings.startsWith(vid, 'http') ? vid : 'http://localhost:8080' + vid}" type="video/mp4">
+                            </video>
+                        </div>
+
+                        <div class="recipe-meta">
+                            <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 30 min</span>
+                            <span th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
+                                  th:text="${receta.dificultad == 'BAJA' ? '🟢 Fácil' : (receta.dificultad == 'MEDIA' ? '🟡 Medio' : '🔴 Difícil')}">🟢 Fácil</span>
+                            <span th:text="'📍 ' + ${receta.paisOrigen}">📍 País</span>
+                        </div>
+                        
+                        <div class="recipe-photo" th:text="'🍽️ ' + ${receta.tipoCocina}">🍽️ Tipo de cocina</div>
+                        
+                        <div class="ingredients" th:if="${receta.ingredientes != null and !receta.ingredientes.isEmpty()}">
+                            <h4>Ingredientes:</h4>
+                            <ul>
+                                <li th:each="ingrediente : ${receta.ingredientes}" 
+                                    th:text="${ingrediente.cantidad} + ' ' + ${ingrediente.unidadMedida} + ' de ' + ${ingrediente.nombre}">
+                                    Ingrediente
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="preparation">
+                            <h4>Instrucciones:</h4>
+                            <p th:text="${receta.instrucciones}">Instrucciones...</p>
+                        </div>
+                        
+                        <!-- Toggle Status Button -->
+                        <div class="recipe-actions" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                            <button class="toggle-status-btn nav-btn secondary" style="width: 100%; justify-content: center;"
+                                    th:data-recipe-id="${receta.idReceta}"
+                                    th:data-current-status="${receta.publicada}">
+                                <span class="btn-icon" th:text="${receta.publicada} ? '🚫' : '✅'"></span>
+                                <span th:text="${receta.publicada} ? 'Ocultar a Privado (Borrador)' : 'Publicar a Todos'">Acción</span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <!-- Mostrar mensaje cuando no hay creadas -->
+            <div th:if="${misRecetas == null or misRecetas.isEmpty()}" class="no-favorites" style="padding: 2rem; background: #fff; border-radius: 10px; border: 1px dashed #ccc;">
+                <div class="empty-state">
+                    <h3>No has creado ninguna receta aún</h3>
+                    <p>Haz clic en "Crear Receta" para inspirar a otros.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN 2: MIS FAVORITAS -->
+    <section class="recipes-section" id="mis-favoritas">
+        <div class="container">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 10px;">⭐ Mis Favoritas</h2>
+            
             <!-- Mostrar mensaje si hay error -->
-            <div th:if="${error}" class="alert alert-danger">
-                <p th:text="${error}">Error al cargar las recetas</p>
+            <div th:if="${errorFav}" class="alert alert-danger" style="margin-bottom: 20px;">
+                <p th:text="${errorFav}">Error al cargar las recetas</p>
             </div>
             
             <!-- Mostrar recetas favoritas si existen -->
@@ -71,6 +162,21 @@
                         <h3 th:text="${receta.titulo}">Título de la receta</h3>
                     </div>
                     <div class="card-content">
+                        <!-- Visual media -->
+                        <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty()}" class="recipe-media-container">
+                            <img th:each="img : ${receta.imagenes}" 
+                                 th:src="${#strings.startsWith(img, 'http') ? img : 'http://localhost:8080' + img}" 
+                                 class="recipe-media-item" 
+                                 alt="Imagen de receta"/>
+                        </div>
+                        <div th:if="${receta.videos != null and !receta.videos.isEmpty()}" class="recipe-media-container">
+                            <video th:each="vid : ${receta.videos}" 
+                                   controls 
+                                   class="recipe-media-item">
+                                <source th:src="${#strings.startsWith(vid, 'http') ? vid : 'http://localhost:8080' + vid}" type="video/mp4">
+                            </video>
+                        </div>
+
                         <div class="recipe-meta">
                             <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 30 min</span>
                             <span th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
@@ -95,22 +201,16 @@
                             <p th:text="${receta.instrucciones}">Instrucciones de preparación...</p>
                         </div>
                         
-                        
-                        <span class="difficulty" 
-                        th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
-                        th:text="${receta.dificultad == 'BAJA' ? 'Principiante' : (receta.dificultad == 'MEDIA' ? 'Intermedio' : 'Avanzado')}">
-                        Principiante
-                    </span>
-                    <!-- Botón para quitar de favoritos -->
-                    <div class="recipe-actions">
-                        <button class="remove-from-list-btn" 
-                                th:data-recipe-id="${receta.idReceta}"
-                                th:data-recipe-title="${receta.titulo}"
-                                title="Quitar de mis recetas favoritas">
-                            <span class="btn-icon">💔</span>
-                            Quitar de favoritas
-                        </button>
-                    </div>
+                        <!-- Botón para quitar de favoritos -->
+                        <div class="recipe-actions" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                            <button class="remove-from-list-btn" style="width: 100%; justify-content: center; background: #ffeaa7; color: #d63031; border: 1px solid #ffeaa7;"
+                                    th:data-recipe-id="${receta.idReceta}"
+                                    th:data-recipe-title="${receta.titulo}"
+                                    title="Quitar de mis recetas favoritas">
+                                <span class="btn-icon">💔</span>
+                                Quitar de favoritas
+                            </button>
+                        </div>
                     </div>
                 </article>
             </div>
@@ -139,6 +239,5 @@
 
 <!-- JavaScript externalizado para cumplir CSP sin unsafe-inline -->
 <script th:src="@{/detalle.js}"></script>
-
-</body> 
+</body>
 </html>

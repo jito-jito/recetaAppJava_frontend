@@ -46,14 +46,14 @@ public class SecurityConfig {
                         "script-src 'self'; " +
                         "style-src 'self' https://fonts.googleapis.com; " +
                         "font-src 'self' https://fonts.gstatic.com; " +
-                        "img-src 'self' data:; " +
+                        "img-src 'self' data: http://localhost:8080; " +
                         "connect-src 'self' http://localhost:8080 https://localhost:8080; " +
                         "frame-src 'none'; " +
                         "frame-ancestors 'none'; " +
                         "form-action 'self'; " +
                         "base-uri 'self'; " +
                         "object-src 'none'; " +
-                        "media-src 'none'; " +
+                        "media-src 'self' http://localhost:8080; " +
                         "manifest-src 'self'; " +
                         "worker-src 'none'"
                         // Removido 'upgrade-insecure-requests' para desarrollo local

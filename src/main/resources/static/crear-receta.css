@@ -1,0 +1,217 @@
+/* Estilos para la página de creación de recetas */
+:root {
+    --primary-color: #6c5ce7;
+    --primary-dark: #74b9ff;
+    --text-color: #2d3436;
+    --glass-border: rgba(0, 0, 0, 0.1);
+}
+/* Reutilizamos variables del archivo style.css */
+  /* Reutilizamos variables del archivo style.css */
+  
+  body {
+      background-color: var(--background);
+      color: var(--text-color);
+  }
+  
+  .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+  }
+  
+  .creation-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  }
+  
+  .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 30px;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+  }
+  
+  .form-group {
+      margin-bottom: 20px;
+  }
+  
+  .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-color);
+  }
+  
+  .form-control {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+  }
+  
+  .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+      background: #fff;
+  }
+  
+  textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+  }
+  
+  /* Grid para dos columnas */
+  .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+  }
+  
+  /* Sección de ingredientes */
+  .ingredients-section {
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      margin-bottom: 30px;
+  }
+  
+  .ingredients-section h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+  }
+  
+  .ingredient-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 15px;
+      margin-bottom: 15px;
+      align-items: center;
+  }
+  
+  .btn-remove-ingredient {
+      background: #ff4757;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+  }
+  
+  .btn-remove-ingredient:hover {
+      background: #ff6b81;
+      transform: scale(1.05);
+  }
+  
+  .btn-add-ingredient {
+      background: transparent;
+      color: var(--primary-color);
+      border: 2px dashed var(--primary-color);
+      border-radius: 8px;
+      padding: 10px 20px;
+      width: 100%;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-size: 1rem;
+      font-family: inherit;
+  }
+  
+  .btn-add-ingredient:hover {
+      background: rgba(74, 144, 226, 0.05);
+  }
+  
+  /* Subida de archivos */
+  .file-upload-section {
+      margin-top: 30px;
+  }
+  
+  .file-drop-area {
+      border: 2px dashed var(--glass-border);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.5);
+      transition: all 0.3s;
+      cursor: pointer;
+      margin-bottom: 15px;
+  }
+  
+  .file-drop-area:hover {
+      border-color: var(--primary-color);
+      background: rgba(74, 144, 226, 0.02);
+  }
+  
+  .file-drop-area span.icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 10px;
+  }
+  
+  /* Botón de envío */
+  .btn-submit {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+      font-family: inherit;
+  }
+  
+  .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(74, 144, 226, 0.2);
+  }
+  
+  .btn-submit:disabled {
+      background: #ccc;
+      transform: none;
+      box-shadow: none;
+      cursor: not-allowed;
+  }
+  
+  /* Diseño adaptativo (movil) */
+  @media (max-width: 600px) {
+      .form-row {
+          grid-template-columns: 1fr;
+      }
+      .ingredient-row {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          background: white;
+          padding: 15px;
+          border-radius: 8px;
+          border: 1px solid rgba(0,0,0,0.05);
+      }
+      .btn-remove-ingredient {
+          width: 100%;
+          border-radius: 5px;
+      }
+  }

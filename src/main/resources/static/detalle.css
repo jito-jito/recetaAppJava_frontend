@@ -908,3 +908,18 @@ body {
     color: #d63031;
     border: 1px solid rgba(214, 48, 49, 0.2);
 }
+/* Estilos para lista de medios en detalle */
+.recipe-media-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+}
+.recipe-media-item {
+    flex: 0 0 auto;
+    width: 280px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+}

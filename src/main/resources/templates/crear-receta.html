@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecetaApp - Crear Receta</title>
+    <!-- Estilos base y de tarjeta -->
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <link rel="stylesheet" th:href="@{/inicio.css}">
+    <link rel="stylesheet" th:href="@{/crear-receta.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Inyectar el token JWT de esta sesión -->
+    <meta name="api-token" th:content="${apiToken}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand" style="text-decoration: none;">
+                <span class="brand-icon">🔥</span>
+                <span class="brand-text">RecetaApp</span>
+            </a>
+            <div class="nav-actions">
+                <div class="user-greeting">
+                    <span class="greeting-text">
+                        <span class="greeting-icon">👋</span>
+                        ¡Hola, <strong th:text="${username}">Usuario</strong>!
+                    </span>
+                    <div class="user-menu">
+                        <a href="/" class="nav-btn secondary">Inicio</a>
+                        <button class="nav-btn logout" id="logoutBtn">Salir</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="creation-card">
+            <h1 class="page-title">Crear Nueva Receta</h1>
+            
+            <form id="recipeForm">
+                <div class="form-group">
+                    <label for="titulo">Título de la receta *</label>
+                    <input type="text" id="titulo" class="form-control" required placeholder="Ej: Tacos al Pastor">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tipoCocina">Tipo de Cocina *</label>
+                        <input type="text" id="tipoCocina" class="form-control" required placeholder="Ej: Urbana, Tradicional">
+                    </div>
+                    <div class="form-group">
+                        <label for="paisOrigen">País de Origen *</label>
+                        <input type="text" id="paisOrigen" class="form-control" required placeholder="Ej: México">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dificultad">Dificultad *</label>
+                        <select id="dificultad" class="form-control" required>
+                            <option value="" disabled selected>Selecciona una...</option>
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="ALTA">Alta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tiempoCoccion">Tiempo de Cocción (minutos) *</label>
+                        <input type="number" id="tiempoCoccion" class="form-control" required min="1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="instrucciones">Instrucciones Paso a Paso *</label>
+                    <textarea id="instrucciones" class="form-control" required placeholder="Describe cómo preparar esta delicia..."></textarea>
+                </div>
+
+                <div class="ingredients-section">
+                    <h3>Ingredientes</h3>
+                    <div id="ingredientsContainer">
+                        <!-- Componente base primer ingrediente -->
+                        <div class="ingredient-row">
+                            <input type="text" class="form-control i-nombre" placeholder="Nombre (Ej: Tomate)" required>
+                            <input type="number" class="form-control i-cantidad" placeholder="Cant." step="0.01" min="0" required>
+                            <input type="text" class="form-control i-unidad" placeholder="Unidad" required>
+                            <button type="button" class="btn-remove-ingredient" disabled title="No se puede eliminar">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-ingredient" id="addIngredientBtn">+ Añadir otro ingrediente</button>
+                </div>
+
+                <div class="file-upload-section">
+                    <h3>Multimedia (Opcional)</h3>
+                    <div class="file-drop-area">
+                        <span class="icon">📸</span>
+                        <p>Imágenes (.jpg, .png)</p>
+                        <input type="file" id="inputImages" multiple accept="image/*" class="form-control" style="margin-top: 10px;">
+                    </div>
+                    <div class="file-drop-area">
+                        <span class="icon">🎥</span>
+                        <p>Videos (.mp4)</p>
+                        <input type="file" id="inputVideos" multiple accept="video/*" class="form-control" style="margin-top: 10px;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Publicar Receta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script principal de la página -->
+    <script th:src="@{/crear-receta.js}"></script>
+</body>
+</html>

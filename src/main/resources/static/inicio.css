@@ -806,3 +806,12 @@ body {
         padding: 40px 15px;
     }
 }
+/* Estilos para medios de recetas añadidos dinámicamente */
+.recipe-media-element {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: block;
+}
