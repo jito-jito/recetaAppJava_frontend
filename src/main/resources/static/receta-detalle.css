@@ -1,0 +1,346 @@
+/* receta-detalle.css */
+body {
+    background-color: #f8f9fa;
+}
+
+.recipe-detail-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.detail-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 40px 30px 30px;
+    background: linear-gradient(135deg, #6c5ce7, #74b9ff);
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.detail-title {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 15px;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.recipe-meta-large {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rating-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 8px 20px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stars-display {
+    color: #dfe6e9;
+    /* Estrellas vacías grises claras */
+    font-size: 1.5rem;
+}
+
+.stars-display .star {
+    margin: 0 2px;
+}
+
+.stars-display .star.filled {
+    color: #f1c40f;
+    /* Estrellas llenas amarillas */
+}
+
+.stars-display .star.half-filled {
+    color: #f1c40f;
+    opacity: 0.5;
+    /* Simulación de media estrella para UI básica */
+}
+
+.rating-number {
+    font-weight: 700;
+    color: #fdcb6e;
+}
+
+.comments-count-text {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1rem;
+}
+
+/* Media */
+.media-gallery {
+    margin-bottom: 40px;
+}
+
+.main-image-container {
+    border-radius: 15px;
+    overflow: hidden;
+    max-height: 500px;
+    display: flex;
+    justify-content: center;
+    background: #f0f0f0;
+    margin-top: 30px;
+}
+
+.main-recipe-image,
+.main-recipe-video {
+    width: 100%;
+    object-fit: cover;
+
+}
+
+.thumbnails {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    overflow-x: auto;
+}
+
+.thumbnail-image {
+    width: 100px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumbnail-image:hover {
+    transform: scale(1.05);
+}
+
+/* Grid layout for detail */
+.detail-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+}
+
+@media (max-width: 768px) {
+    .detail-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ingredients-side h3,
+.preparation-side h3,
+.social-section h3 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+.ingredients-list {
+    list-style: none;
+    padding: 0;
+}
+
+.ingredient-item {
+    padding: 12px 15px;
+    background: #fdfdfd;
+    border: 1px solid #eee;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.ing-amount {
+    font-weight: 600;
+    color: #2A9D8F;
+}
+
+.instructions-text {
+    font-size: 1.1rem;
+    color: #4a4a4a;
+}
+
+.section-divider {
+    border: 0;
+    height: 1px;
+    background: #eee;
+    margin: 40px 0;
+}
+
+/* Social Section */
+.social-section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.rate-this-recipe {
+    text-align: center;
+    background: #fdfbf7;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px dashed #eccc68;
+}
+
+.interactive-stars {
+    font-size: 3rem;
+    color: #dfe6e9;
+    cursor: pointer;
+    display: inline-flex;
+    flex-direction: row;
+}
+
+.interactive-stars .rate-star {
+    transition: color 0.1s;
+}
+
+.interactive-stars .rate-star:hover,
+.interactive-stars .rate-star.hovered,
+.interactive-stars .rate-star.active {
+    color: #f1c40f;
+}
+
+.rate-message {
+    color: #b2bec3;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.rate-message.success {
+    color: #2A9D8F;
+    font-weight: bold;
+}
+
+.rate-message.error {
+    color: #e74c3c;
+}
+
+.comment-form-container {
+    margin-bottom: 30px;
+}
+
+#commentText {
+    width: 100%;
+    resize: vertical;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    padding: 15px;
+    font-family: inherit;
+    border: 1px solid #ccc;
+}
+
+.btn-submit {
+    background: #2A9D8F;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+    background: #21867a;
+}
+
+.btn-submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.comment-card {
+    background: #fdfdfd;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #2A9D8F;
+    border-top: 1px solid #eee;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #333;
+}
+
+.comment-date {
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.comment-text {
+    color: #555;
+    line-height: 1.5;
+}
+
+.empty-state-comments {
+    text-align: center;
+    color: #999;
+    padding: 30px;
+    background: #fafafa;
+    border-radius: 10px;
+    border: 1px dashed #ccc;
+}
+
+/* Prompts de login social: ancho completo, centrado, sin borde rojo */
+.social-login-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 20px 30px;
+    background: linear-gradient(135deg, #f8f9ff, #eef0ff);
+    border-radius: 12px;
+    border: 1px solid #dde0f5;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.social-login-prompt .lock-emoji {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.social-login-prompt p {
+    margin: 0;
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.social-login-link {
+    color: #2A9D8F;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.social-login-link:hover {
+    color: #1d7a6e;
+    text-decoration: underline;
+}

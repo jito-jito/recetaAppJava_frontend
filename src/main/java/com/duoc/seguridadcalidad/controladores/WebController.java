@@ -551,4 +551,126 @@ public class WebController {
             return ResponseEntity.ok(java.util.Collections.emptyList());
         }
     }
+    /**
+     * Endpoint para ver el detalle completo de la receta
+     */
+    @GetMapping("/receta/{id}")
+    public String verReceta(@PathVariable Long id, Model model, HttpSession session) {
+        String token = (String) session.getAttribute("jwtToken");
+        String username = (String) session.getAttribute("username");
+
+        if (token != null && username != null) {
+            model.addAttribute("authenticated", true);
+            model.addAttribute("username", username);
+            model.addAttribute("apiToken", token);
+        } else {
+            model.addAttribute("authenticated", false);
+        }
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BACKEND_URL + "/recipes/" + id))
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                java.util.Map<String, Object> receta = objectMapper.readValue(response.body(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Object>>() {});
+                model.addAttribute("receta", receta);
+            } else {
+                model.addAttribute("error", "No se encontró la receta");
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
+        }
+
+        return "receta-detalle";
+    }
+
+    /**
+     * Proxies para Comentarios
+     */
+    @GetMapping("/api/recipes/{id}/comentarios")
+    @ResponseBody
+    public ResponseEntity<String> getComentarios(@PathVariable Long id) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/comentarios"))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/api/recipes/{id}/comentarios")
+    @ResponseBody
+    public ResponseEntity<String> postComentario(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        String token = (String) session.getAttribute("jwtToken");
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado");
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/comentarios"))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", token)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Proxies para Valoraciones
+     */
+    @GetMapping("/api/recipes/{id}/valoraciones")
+    @ResponseBody
+    public ResponseEntity<String> getValoraciones(@PathVariable Long id, HttpSession session) {
+        String token = (String) session.getAttribute("jwtToken");
+        try {
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/valoraciones"))
+                    .GET();
+            // Algunas APIs requieren token para leer, otras no. Lo enviamos si lo tenemos.
+            if (token != null) {
+                requestBuilder.header("Authorization", token);
+            }
+            HttpRequest request = requestBuilder.build();
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/api/recipes/{id}/valoraciones")
+    @ResponseBody
+    public ResponseEntity<String> postValoracion(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        String token = (String) session.getAttribute("jwtToken");
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado");
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/valoraciones"))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", token)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
 }

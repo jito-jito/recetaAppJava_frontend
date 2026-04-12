@@ -170,24 +170,26 @@
                                 <span
                                     th:unless="${receta.tipoCocina == 'Mexicana' or receta.tipoCocina == 'Española' or receta.tipoCocina == 'Italiana' or receta.tipoCocina == 'Japonesa' or receta.tipoCocina == 'Peruana'}">🍽️</span>
                             </span>
-                            <h3 th:text="${receta.titulo}">Título de la receta</h3>
+                            <h3 style="margin: 0;"><a th:href="@{/receta/{id}(id=${receta.idReceta})}" th:text="${receta.titulo}" class="card-title-link">Título de la receta</a></h3>
                         </div>
                         <div class="card-content">
                             <!-- Visual media -->
-                            <img th:if="${receta.imagenes != null and !receta.imagenes.isEmpty()}"
+                            <img th:if="${receta.imagenes != null and !receta.imagenes.isEmpty() and receta.imagenes[0] != null and receta.imagenes[0] != ''}"
                                 th:src="${#strings.startsWith(receta.imagenes[0], 'http') ? receta.imagenes[0] : 'http://localhost:8080' + receta.imagenes[0]}"
                                 class="recipe-media-element"
                                 alt="Imagen de receta" />
                             <video
-                                th:if="${(receta.imagenes == null or receta.imagenes.isEmpty()) and receta.videos != null and !receta.videos.isEmpty()}"
+                                th:if="${receta.videos != null and !receta.videos.isEmpty() and receta.videos[0] != null and receta.videos[0] != ''}"
                                 controls
-                                class="recipe-media-element">
+                                class="recipe-media-element"
+                                style="margin-top: 10px;">
                                 <source th:src="${#strings.startsWith(receta.videos[0], 'http') ? receta.videos[0] : 'http://localhost:8080' + receta.videos[0]}" type="video/mp4">
                             </video>
 
                             <div class="recipe-meta">
                                 <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 45 min</span>
-                                <span th:text="'⭐ ' + ${receta.popularidad}">⭐ 4.5</span>
+                                <span th:text="'⭐ ' + (${receta.puntajePromedio != null ? receta.puntajePromedio : '0.0'})">⭐ 4.5</span>
+                                <span th:text="'💬 ' + (${receta.cantidadComentarios != null ? receta.cantidadComentarios : '0'})">💬 0</span>
                                 <span th:text="'🌍 ' + ${receta.paisOrigen}">🌍 País</span>
                             </div>
                             <div class="ingredients"
@@ -229,6 +231,11 @@
                                     <span class="btn-icon">❤️</span>
                                     Añadir a mis favoritas
                                 </button>
+                                
+                                <a th:href="@{/receta/{id}(id=${receta.idReceta})}" class="nav-btn secondary detail-btn">
+                                    <span class="btn-icon">👁️</span>
+                                    Ver Receta Completa
+                                </a>
                             </div>
 
                             <!-- Mensaje para usuarios no autenticados -->
@@ -238,6 +245,13 @@
                                     <a href="/login" class="prompt-link">Inicia sesión</a> para guardar tus recetas
                                     favoritas
                                 </p>
+                            </div>
+                            <!-- Para usuarios sin sesión, también mostrar el botón de ver detalles -->
+                            <div th:unless="${authenticated}" class="recipe-actions" style="margin-top: 15px;">
+                                <a th:href="@{/receta/{id}(id=${receta.idReceta})}" class="nav-btn secondary" style="width: 100%; justify-content: center;">
+                                    <span class="btn-icon">👁️</span>
+                                    Ver Receta Completa
+                                </a>
                             </div>
                         </div>
                     </article>
@@ -304,8 +318,8 @@
                     </div>
                 </div>
 
-                <!-- Mensaje cuando no hay resultados -->
-                <div id="noResults" class="no-results" style="display: none;">
+                <!-- Mensaje cuando no hay resultados (solo visible al filtrar, nunca en carga inicial) -->
+                <div id="noResults" class="no-results" style="display: none;" data-filter-only="true">
                     <div class="no-results-content">
                         <span class="no-results-icon">🔍</span>
                         <h3>No encontramos recetas</h3>

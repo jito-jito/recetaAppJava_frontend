@@ -1,7 +1,11 @@
 // JavaScript para la página de inicio
 // Funciones de búsqueda y filtrado
 
+// Flag: solo mostrar "no resultados" si el usuario ya interactuó con el buscador/filtros
+let userHasFiltered = false;
+
 function searchRecipes() {
+    userHasFiltered = true;
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     filterRecipes(searchTerm);
 }
@@ -19,8 +23,9 @@ function filterRecipes(searchTerm = '') {
         const difficulty = card.dataset.difficulty;
         const time = parseInt(card.dataset.time);
         const type = card.dataset.type;
-        const keywords = card.dataset.keywords.toLowerCase();
-        const title = card.querySelector('h3').textContent.toLowerCase();
+        const keywords = (card.dataset.keywords || '').toLowerCase();
+        const titleEl = card.querySelector('h3');
+        const title = titleEl ? titleEl.textContent.toLowerCase() : '';
         
         let showCard = true;
 
@@ -54,26 +59,35 @@ function filterRecipes(searchTerm = '') {
         }
     });
 
-    // Mostrar/ocultar mensaje de "no resultados"
+    // Solo mostrar "no resultados" si el usuario ya buscó/filtró activamente
     const noResults = document.getElementById('noResults');
-    if (visibleCount === 0) {
-        noResults.style.display = 'block';
-    } else {
-        noResults.style.display = 'none';
+    if (noResults) {
+        if (visibleCount === 0 && userHasFiltered) {
+            noResults.classList.add('visible');
+        } else {
+            noResults.classList.remove('visible');
+        }
     }
 }
 
 function searchByKeyword(keyword) {
+    userHasFiltered = true;
     document.getElementById('searchInput').value = keyword;
     searchRecipes();
 }
 
 function clearFilters() {
+    userHasFiltered = false; // reset: volvemos a "carga inicial"
     document.getElementById('searchInput').value = '';
     document.getElementById('difficultyFilter').value = '';
     document.getElementById('timeFilter').value = '';
     document.getElementById('typeFilter').value = '';
-    filterRecipes();
+    // Mostrar todas las cards sin activar el mensaje de "no resultados"
+    document.querySelectorAll('.recipe-card').forEach(card => {
+        card.style.display = 'block';
+    });
+    const noResults = document.getElementById('noResults');
+    if (noResults) noResults.classList.remove('visible');
 }
 
 // Funciones para usuarios autenticados
@@ -145,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
+            userHasFiltered = true;
             setTimeout(filterRecipes, 300); // Debounce de 300ms
         });
 
@@ -165,17 +180,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Filtros
     const difficultyFilter = document.getElementById('difficultyFilter');
     if (difficultyFilter) {
-        difficultyFilter.addEventListener('change', filterRecipes);
+        difficultyFilter.addEventListener('change', function() { userHasFiltered = true; filterRecipes(); });
     }
 
     const timeFilter = document.getElementById('timeFilter');
     if (timeFilter) {
-        timeFilter.addEventListener('change', filterRecipes);
+        timeFilter.addEventListener('change', function() { userHasFiltered = true; filterRecipes(); });
     }
 
     const typeFilter = document.getElementById('typeFilter');
     if (typeFilter) {
-        typeFilter.addEventListener('change', filterRecipes);
+        typeFilter.addEventListener('change', function() { userHasFiltered = true; filterRecipes(); });
     }
 
     // Botón limpiar filtros

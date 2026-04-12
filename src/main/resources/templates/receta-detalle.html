@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'RecetaApp - ' + (${receta != null ? receta.titulo : 'Detalle'})">RecetaApp - Detalle</title>
+    <!-- Estilos base y de tarjeta -->
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <link rel="stylesheet" th:href="@{/inicio.css}">
+    <link rel="stylesheet" th:href="@{/receta-detalle.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Inyectar variables para JS -->
+    <meta name="api-token" th:content="${apiToken != null ? apiToken : ''}">
+    <meta name="receta-id" th:content="${receta != null ? receta.idReceta : ''}">
+    <meta name="is-authenticated" th:content="${authenticated}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand" style="text-decoration: none;">
+                <span class="brand-icon">🔥</span>
+                <span class="brand-text">RecetaApp</span>
+            </a>
+            <div class="nav-actions">
+                <div th:if="${authenticated}" class="user-greeting">
+                    <span class="greeting-text">
+                        <span class="greeting-icon">👋</span>
+                        ¡Hola, <strong th:text="${username}">Usuario</strong>!
+                    </span>
+                    <div class="user-menu">
+                        <a href="/crear-receta" class="nav-btn secondary" style="background:#4CAF50; color:white; border-color:#4CAF50;">
+                            <span class="btn-icon">➕</span>
+                            Crear Receta
+                        </a>
+                        <a href="/detalle" class="nav-btn secondary">Mis Recetas</a>
+                        <button class="nav-btn logout" id="logoutBtn">Salir</button>
+                    </div>
+                </div>
+                <a th:unless="${authenticated}" href="/login" class="nav-btn">
+                    <span class="btn-icon">👤</span>
+                    Acceder
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 900px; margin-top: 40px; margin-bottom: 40px;">
+        <div th:if="${error}" class="alert alert-danger" style="padding: 20px; background: #ffeaa7; color: #d63031; border-radius: 10px; margin-bottom: 20px;">
+            <p th:text="${error}">Error</p>
+            <a href="/" class="nav-btn primary" style="display:inline-flex; background: #2A9D8F; color: white; margin-top: 10px;">Volver al inicio</a>
+        </div>
+
+        <div th:if="${receta != null}" class="recipe-detail-container">
+            <!-- Cabecera de la receta -->
+            <div class="detail-header">
+                <h1 class="detail-title" th:text="${receta.titulo}">Título</h1>
+                <div class="recipe-meta-large">
+                    <span th:text="'📍 ' + ${receta.paisOrigen}"></span> · 
+                    <span th:text="'🍽️ ' + ${receta.tipoCocina}"></span> · 
+                    <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'"></span>
+                </div>
+                
+                <!-- Ratings Summary -->
+                <div class="rating-summary">
+                    <div class="stars-display" id="averageRatingDisplay">
+                        <span class="star" th:each="i : ${#numbers.sequence(1, 5)}"
+                              th:classappend="${receta.puntajePromedio != null && receta.puntajePromedio >= i ? 'filled' : (receta.puntajePromedio != null && receta.puntajePromedio >= (i - 0.5) ? 'half-filled' : '')}">★</span>
+                    </div>
+                    <span class="rating-number" id="ratingNumberText" th:text="${receta.puntajePromedio != null ? receta.puntajePromedio : '0.0'}">5.0</span>
+                    <span class="comments-count-text">(<span id="headerCommentsCount" th:text="${receta.cantidadComentarios != null ? receta.cantidadComentarios : '0'}">0</span> comentarios)</span>
+                </div>
+            </div>
+
+            <!-- Media -->
+            <div class="media-gallery">
+                <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty() and receta.imagenes[0] != null and receta.imagenes[0] != ''}" class="main-image-container" id="mainImageContainer">
+                    <img th:src="${#strings.startsWith(receta.imagenes[0], 'http') ? receta.imagenes[0] : 'http://localhost:8080' + receta.imagenes[0]}" 
+                         class="main-recipe-image" alt="Imagen principal"/>
+                </div>
+                <div th:if="${receta.videos != null and !receta.videos.isEmpty() and receta.videos[0] != null and receta.videos[0] != ''}" class="main-image-container" id="mainVideoContainer" style="margin-top: 15px;">
+                    <video controls class="main-recipe-video">
+                        <source th:src="${#strings.startsWith(receta.videos[0], 'http') ? receta.videos[0] : 'http://localhost:8080' + receta.videos[0]}" type="video/mp4">
+                    </video>
+                </div>
+                <!-- Miniaturas si hay más de 1 imagen -->
+                <div th:if="${receta.imagenes != null and receta.imagenes.size() > 1}" class="thumbnails">
+                    <img th:each="img, iter : ${receta.imagenes}" 
+                         th:if="${iter.index > 0 and img != null and img != ''}"
+                         th:src="${#strings.startsWith(img, 'http') ? img : 'http://localhost:8080' + img}" 
+                         class="thumbnail-image" alt="Imagen secundaria"/>
+                </div>
+            </div>
+
+            <!-- Resto de info -->
+            <div class="detail-content-grid">
+                <!-- Columna Izquierda: Ingredientes -->
+                <div class="ingredients-side">
+                    <h3>Ingredientes</h3>
+                    <ul class="ingredients-list">
+                        <li th:each="ing : ${receta.ingredientes}" class="ingredient-item">
+                            <span class="ing-amount" th:text="${ing.cantidad} + ' ' + ${ing.unidadMedida}"></span>
+                            <span class="ing-name" th:text="${ing.nombre}"></span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Columna Derecha: Preparación -->
+                <div class="preparation-side">
+                    <h3>Preparación</h3>
+                    <div class="instructions-text">
+                        <p th:text="${receta.instrucciones}" style="white-space: pre-wrap; line-height: 1.8;"></p>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Sección Social: Valoraciones y Comentarios -->
+            <div class="social-section">
+                <!-- Interactividad de Valoraciones -->
+                <div class="rate-this-recipe">
+                    <h3>Valora esta receta</h3>
+                    <div th:if="${authenticated}" class="interactive-stars" id="interactiveStarsContainer">
+                        <span class="rate-star" data-value="1">★</span>
+                        <span class="rate-star" data-value="2">★</span>
+                        <span class="rate-star" data-value="3">★</span>
+                        <span class="rate-star" data-value="4">★</span>
+                        <span class="rate-star" data-value="5">★</span>
+                    </div>
+                    <p th:if="${authenticated}" id="rateMessage" class="rate-message">Haz clic en una estrella para votar.</p>
+                    <div th:unless="${authenticated}" class="social-login-prompt">
+                        <span class="lock-emoji">🔒</span>
+                        <p><a href="/login" class="social-login-link">Inicia sesión</a> para dejar tu valoración.</p>
+                    </div>
+                </div>
+
+                <!-- Comentarios -->
+                <div class="comments-area">
+                    <h3>Comentarios (<span id="commentsCountSpan" th:text="${receta.cantidadComentarios != null ? receta.cantidadComentarios : '0'}">0</span>)</h3>
+                    
+                    <!-- Formulario de comentario (Solo logueados) -->
+                    <div th:if="${authenticated}" class="comment-form-container">
+                        <form id="commentForm">
+                            <textarea id="commentText" placeholder="¡Qué te ha parecido la receta? Deja tu comentario aquí..." required rows="3" class="form-control"></textarea>
+                            <button type="submit" class="btn-submit" id="submitCommentBtn">Publicar Comentario</button>
+                        </form>
+                    </div>
+                    
+                    <div th:unless="${authenticated}" class="social-login-prompt">
+                        <span class="lock-emoji">🔒</span>
+                        <p><a href="/login" class="social-login-link">Inicia sesión</a> para unirte a la conversación y añadir tu comentario.</p>
+                    </div>
+
+                    <!-- Lista de Comentarios (Pública) -->
+                    <div class="comments-list" id="commentsList">
+                        <!-- Generados por JS -->
+                        <div class="loading-state" style="text-align: center; color: #999;">Cargando comentarios...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">© 2025 RecetaApp • Transformando cocinas, nutriendo vidas</p>
+        </div>
+    </footer>
+
+    <!-- Script de la página de detalle -->
+    <script th:src="@{/receta-detalle.js}"></script>
+</body>
+</html>

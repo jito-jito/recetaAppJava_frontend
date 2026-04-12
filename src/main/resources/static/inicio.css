@@ -34,6 +34,7 @@ body {
     justify-content: space-between;
     align-items: center;
     height: 70px;
+    width: 100%;
 }
 
 .nav-brand {
@@ -50,8 +51,15 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 .brand-text {
@@ -118,11 +126,35 @@ body {
     gap: 10px;
 }
 
-/* Estilos para acciones de recetas */
+/* Acciones de la receta: flex column con gap para que los botones no queden pegados */
 .recipe-actions {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Botón de detalle ocupa el 100% del ancho */
+.detail-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Enlace del título dentro del card-header - alta especificidad para sobrescribir estilos base */
+.card-header h3 a,
+.card-header h3 a:link,
+.card-header h3 a:visited {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-decoration: none !important;
+    display: block;
+}
+
+.card-header h3 a:hover {
+    opacity: 0.85;
+    text-decoration: underline !important;
 }
 
 .add-to-list-btn {
@@ -239,8 +271,13 @@ body {
 }
 
 @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .hero-content {
@@ -256,8 +293,15 @@ body {
 }
 
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .highlight {
@@ -319,8 +363,11 @@ body {
 }
 
 .recipes-grid {
+    margin-top: 20px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+
+    /* grid-template-columns: repeat(auto-fit, minmax(320px, 420px)); */
     gap: 30px;
 }
 
@@ -369,11 +416,13 @@ body {
     font-weight: 500;
 }
 
-.ingredients, .preparation {
+.ingredients,
+.preparation {
     margin-bottom: 20px;
 }
 
-.ingredients h4, .preparation h4 {
+.ingredients h4,
+.preparation h4 {
     color: #2d3436;
     margin-bottom: 12px;
     font-size: 16px;
@@ -531,24 +580,24 @@ body {
     .hero-title {
         font-size: 32px;
     }
-    
+
     .hero-subtitle {
         font-size: 16px;
     }
-    
+
     .hero-badges {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .intro-section h2 {
         font-size: 28px;
     }
-    
+
     .benefits-section h2 {
         font-size: 28px;
     }
-    
+
     .recipe-meta {
         flex-direction: column;
         gap: 10px;
@@ -737,6 +786,16 @@ body {
     display: none;
 }
 
+/* noResults: oculto por defecto (doble protección además del inline style) */
+#noResults {
+    display: none !important;
+}
+
+/* Se muestra solo cuando JS agrega la clase .visible */
+#noResults.visible {
+    display: block !important;
+}
+
 .no-results {
     text-align: center;
     padding: 60px 20px;
@@ -772,26 +831,26 @@ body {
     .search-input-wrapper {
         flex-direction: column;
     }
-    
+
     .search-input {
         min-width: auto;
     }
-    
+
     .filters {
         flex-direction: column;
         gap: 15px;
     }
-    
+
     .filter-group {
         min-width: auto;
         width: 100%;
     }
-    
+
     .suggestion-tags {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .search-wrapper h2 {
         font-size: 24px;
     }
@@ -801,11 +860,12 @@ body {
     .search-container {
         padding: 20px;
     }
-    
+
     .search-section {
         padding: 40px 15px;
     }
 }
+
 /* Estilos para medios de recetas añadidos dinámicamente */
 .recipe-media-element {
     width: 100%;

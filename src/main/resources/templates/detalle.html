@@ -73,7 +73,7 @@
             <div th:if="${misRecetas != null and !misRecetas.isEmpty()}" class="recipes-grid">
                 <article class="recipe-card" th:each="receta : ${misRecetas}">
                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 th:text="${receta.titulo}" style="margin: 0;">Título de la receta</h3>
+                        <h3 style="margin: 0;"><a th:href="@{/receta/{id}(id=${receta.idReceta})}" th:text="${receta.titulo}" style="text-decoration: none; color: white; display: block;">Título de la receta</a></h3>
                         <!-- Badge de estado -->
                         <span class="badge" 
                               th:classappend="${receta.publicada} ? 'badge-publicada' : 'badge-borrador'"
@@ -83,14 +83,16 @@
                     </div>
                     <div class="card-content">
                         <!-- Visual media -->
-                        <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty()}" class="recipe-media-container">
+                        <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty() and receta.imagenes.size() > 0 and receta.imagenes[0] != null and receta.imagenes[0] != ''}" class="recipe-media-container">
                             <img th:each="img : ${receta.imagenes}" 
+                                 th:if="${img != null and img != ''}"
                                  th:src="${#strings.startsWith(img, 'http') ? img : 'http://localhost:8080' + img}" 
                                  class="recipe-media-item" 
                                  alt="Imagen de receta"/>
                         </div>
-                        <div th:if="${receta.videos != null and !receta.videos.isEmpty()}" class="recipe-media-container">
+                        <div th:if="${receta.videos != null and !receta.videos.isEmpty() and receta.videos.size() > 0 and receta.videos[0] != null and receta.videos[0] != ''}" class="recipe-media-container">
                             <video th:each="vid : ${receta.videos}" 
+                                   th:if="${vid != null and vid != ''}"
                                    controls 
                                    class="recipe-media-item">
                                 <source th:src="${#strings.startsWith(vid, 'http') ? vid : 'http://localhost:8080' + vid}" type="video/mp4">
@@ -99,6 +101,8 @@
 
                         <div class="recipe-meta">
                             <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 30 min</span>
+                            <span th:text="'⭐ ' + (${receta.puntajePromedio != null ? receta.puntajePromedio : '0.0'})">⭐ 4.5</span>
+                            <span th:text="'💬 ' + (${receta.cantidadComentarios != null ? receta.cantidadComentarios : '0'})">💬 0</span>
                             <span th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
                                   th:text="${receta.dificultad == 'BAJA' ? '🟢 Fácil' : (receta.dificultad == 'MEDIA' ? '🟡 Medio' : '🔴 Difícil')}">🟢 Fácil</span>
                             <span th:text="'📍 ' + ${receta.paisOrigen}">📍 País</span>
@@ -122,7 +126,11 @@
                         </div>
                         
                         <!-- Toggle Status Button -->
-                        <div class="recipe-actions" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <div class="recipe-actions" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                            <a th:href="@{/receta/{id}(id=${receta.idReceta})}" class="nav-btn primary" style="width: 100%; justify-content: center; background: #2A9D8F; color: white;">
+                                <span class="btn-icon">👁️</span>
+                                Ver Receta
+                            </a>
                             <button class="toggle-status-btn nav-btn secondary" style="width: 100%; justify-content: center;"
                                     th:data-recipe-id="${receta.idReceta}"
                                     th:data-current-status="${receta.publicada}">
@@ -159,18 +167,20 @@
                 <article class="recipe-card" th:each="receta : ${recetas}">
                     <div class="card-header">
                         <span class="recipe-icon">🍽️</span>
-                        <h3 th:text="${receta.titulo}">Título de la receta</h3>
+                        <h3 style="margin: 0;"><a th:href="@{/receta/{id}(id=${receta.idReceta})}" th:text="${receta.titulo}" style="text-decoration: none; color: white; display: block;">Título de la receta</a></h3>
                     </div>
                     <div class="card-content">
                         <!-- Visual media -->
-                        <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty()}" class="recipe-media-container">
+                        <div th:if="${receta.imagenes != null and !receta.imagenes.isEmpty() and receta.imagenes.size() > 0 and receta.imagenes[0] != null and receta.imagenes[0] != ''}" class="recipe-media-container">
                             <img th:each="img : ${receta.imagenes}" 
+                                 th:if="${img != null and img != ''}"
                                  th:src="${#strings.startsWith(img, 'http') ? img : 'http://localhost:8080' + img}" 
                                  class="recipe-media-item" 
                                  alt="Imagen de receta"/>
                         </div>
-                        <div th:if="${receta.videos != null and !receta.videos.isEmpty()}" class="recipe-media-container">
+                        <div th:if="${receta.videos != null and !receta.videos.isEmpty() and receta.videos.size() > 0 and receta.videos[0] != null and receta.videos[0] != ''}" class="recipe-media-container">
                             <video th:each="vid : ${receta.videos}" 
+                                   th:if="${vid != null and vid != ''}"
                                    controls 
                                    class="recipe-media-item">
                                 <source th:src="${#strings.startsWith(vid, 'http') ? vid : 'http://localhost:8080' + vid}" type="video/mp4">
@@ -179,6 +189,8 @@
 
                         <div class="recipe-meta">
                             <span th:text="'⏰ ' + ${receta.tiempoCoccion} + ' min'">⏰ 30 min</span>
+                            <span th:text="'⭐ ' + (${receta.puntajePromedio != null ? receta.puntajePromedio : '0.0'})">⭐ 4.5</span>
+                            <span th:text="'💬 ' + (${receta.cantidadComentarios != null ? receta.cantidadComentarios : '0'})">💬 0</span>
                             <span th:classappend="${receta.dificultad == 'BAJA' ? 'easy' : (receta.dificultad == 'MEDIA' ? 'medium' : 'hard')}"
                                   th:text="${receta.dificultad == 'BAJA' ? '🟢 Fácil' : (receta.dificultad == 'MEDIA' ? '🟡 Medio' : '🔴 Difícil')}">🟢 Fácil</span>
                             <span th:text="'📍 ' + ${receta.paisOrigen}">📍 País</span>
@@ -202,7 +214,11 @@
                         </div>
                         
                         <!-- Botón para quitar de favoritos -->
-                        <div class="recipe-actions" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <div class="recipe-actions" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                            <a th:href="@{/receta/{id}(id=${receta.idReceta})}" class="nav-btn primary" style="width: 100%; justify-content: center; background: #2A9D8F; color: white;">
+                                <span class="btn-icon">👁️</span>
+                                Ver Receta
+                            </a>
                             <button class="remove-from-list-btn" style="width: 100%; justify-content: center; background: #ffeaa7; color: #d63031; border: 1px solid #ffeaa7;"
                                     th:data-recipe-id="${receta.idReceta}"
                                     th:data-recipe-title="${receta.titulo}"
