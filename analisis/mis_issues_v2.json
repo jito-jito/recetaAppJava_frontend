@@ -1,0 +1,271 @@
+{
+    "total": 4,
+    "p": 1,
+    "ps": 100,
+    "paging": {
+        "pageIndex": 1,
+        "pageSize": 100,
+        "total": 4
+    },
+    "effortTotal": 55,
+    "issues": [
+        {
+            "key": "ff6a727a-eaf1-4ac7-ad65-dd0545c6b53e",
+            "rule": "java:S1075",
+            "severity": "MINOR",
+            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+            "project": "receta-app-frontend",
+            "line": 69,
+            "hash": "1648fd69698530b385565db823b63d19",
+            "textRange": {
+                "startLine": 69,
+                "endLine": 69,
+                "startOffset": 47,
+                "endOffset": 58
+            },
+            "flows": [],
+            "status": "OPEN",
+            "message": "Refactor your code to get this URI from a customizable parameter.",
+            "effort": "20min",
+            "debt": "20min",
+            "author": "",
+            "tags": [
+                "android",
+                "cert"
+            ],
+            "creationDate": "2026-04-12T21:51:47-0400",
+            "updateDate": "2026-04-12T21:51:47-0400",
+            "type": "CODE_SMELL",
+            "scope": "MAIN",
+            "quickFixAvailable": false,
+            "messageFormattings": [],
+            "codeVariants": [],
+            "cleanCodeAttribute": "CONVENTIONAL",
+            "cleanCodeAttributeCategory": "CONSISTENT",
+            "impacts": [
+                {
+                    "softwareQuality": "MAINTAINABILITY",
+                    "severity": "LOW"
+                }
+            ],
+            "issueStatus": "OPEN",
+            "prioritizedRule": false,
+            "fromSonarQubeUpdate": false,
+            "internalTags": [],
+            "linkedTicketStatus": "NOT_LINKED"
+        },
+        {
+            "key": "d48e88f8-0e83-4a3a-acc4-35a03cc792c2",
+            "rule": "java:S1075",
+            "severity": "MINOR",
+            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+            "project": "receta-app-frontend",
+            "line": 70,
+            "hash": "765f939d06288d987ca05f40a4dfa075",
+            "textRange": {
+                "startLine": 70,
+                "endLine": 70,
+                "startOffset": 53,
+                "endOffset": 78
+            },
+            "flows": [],
+            "status": "OPEN",
+            "message": "Refactor your code to get this URI from a customizable parameter.",
+            "effort": "20min",
+            "debt": "20min",
+            "author": "",
+            "tags": [
+                "android",
+                "cert"
+            ],
+            "creationDate": "2026-04-12T21:51:47-0400",
+            "updateDate": "2026-04-12T21:51:47-0400",
+            "type": "CODE_SMELL",
+            "scope": "MAIN",
+            "quickFixAvailable": false,
+            "messageFormattings": [],
+            "codeVariants": [],
+            "cleanCodeAttribute": "CONVENTIONAL",
+            "cleanCodeAttributeCategory": "CONSISTENT",
+            "impacts": [
+                {
+                    "softwareQuality": "MAINTAINABILITY",
+                    "severity": "LOW"
+                }
+            ],
+            "issueStatus": "OPEN",
+            "prioritizedRule": false,
+            "fromSonarQubeUpdate": false,
+            "internalTags": [],
+            "linkedTicketStatus": "NOT_LINKED"
+        },
+        {
+            "key": "da5c3657-1f10-4580-8eb3-c5e91341a8fa",
+            "rule": "java:S1192",
+            "severity": "CRITICAL",
+            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+            "project": "receta-app-frontend",
+            "line": 517,
+            "hash": "69ce566450266b3cc3d63e69a46cbb56",
+            "textRange": {
+                "startLine": 517,
+                "endLine": 517,
+                "startOffset": 38,
+                "endOffset": 59
+            },
+            "flows": [
+                {
+                    "locations": [
+                        {
+                            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+                            "textRange": {
+                                "startLine": 517,
+                                "endLine": 517,
+                                "startOffset": 38,
+                                "endOffset": 59
+                            },
+                            "msg": "Duplication",
+                            "msgFormattings": []
+                        }
+                    ]
+                },
+                {
+                    "locations": [
+                        {
+                            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+                            "textRange": {
+                                "startLine": 520,
+                                "endLine": 520,
+                                "startOffset": 38,
+                                "endOffset": 59
+                            },
+                            "msg": "Duplication",
+                            "msgFormattings": []
+                        }
+                    ]
+                },
+                {
+                    "locations": [
+                        {
+                            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+                            "textRange": {
+                                "startLine": 564,
+                                "endLine": 564,
+                                "startOffset": 38,
+                                "endOffset": 59
+                            },
+                            "msg": "Duplication",
+                            "msgFormattings": []
+                        }
+                    ]
+                },
+                {
+                    "locations": [
+                        {
+                            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+                            "textRange": {
+                                "startLine": 567,
+                                "endLine": 567,
+                                "startOffset": 38,
+                                "endOffset": 59
+                            },
+                            "msg": "Duplication",
+                            "msgFormattings": []
+                        }
+                    ]
+                }
+            ],
+            "status": "OPEN",
+            "message": "Define a constant instead of duplicating this literal \"Error de conexi\u00f3n: \" 4 times.",
+            "effort": "10min",
+            "debt": "10min",
+            "author": "",
+            "tags": [
+                "design"
+            ],
+            "creationDate": "2026-04-12T21:51:47-0400",
+            "updateDate": "2026-04-12T21:51:47-0400",
+            "type": "CODE_SMELL",
+            "scope": "MAIN",
+            "quickFixAvailable": false,
+            "messageFormattings": [],
+            "codeVariants": [],
+            "cleanCodeAttribute": "DISTINCT",
+            "cleanCodeAttributeCategory": "ADAPTABLE",
+            "impacts": [
+                {
+                    "softwareQuality": "MAINTAINABILITY",
+                    "severity": "HIGH"
+                }
+            ],
+            "issueStatus": "OPEN",
+            "prioritizedRule": false,
+            "fromSonarQubeUpdate": false,
+            "internalTags": [],
+            "linkedTicketStatus": "NOT_LINKED"
+        },
+        {
+            "key": "d781c5f2-7e3d-4421-a60a-a6035a50d141",
+            "rule": "java:S6863",
+            "severity": "MAJOR",
+            "component": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+            "project": "receta-app-frontend",
+            "line": 607,
+            "hash": "329f221cfcced8d6eb9efdb6ab64d847",
+            "textRange": {
+                "startLine": 607,
+                "endLine": 607,
+                "startOffset": 19,
+                "endOffset": 61
+            },
+            "flows": [],
+            "status": "OPEN",
+            "message": "Set a HttpStatus code reflective of the operation.",
+            "effort": "5min",
+            "debt": "5min",
+            "author": "",
+            "tags": [
+                "spring",
+                "best-practice"
+            ],
+            "creationDate": "2026-04-12T21:51:47-0400",
+            "updateDate": "2026-04-12T21:51:47-0400",
+            "type": "BUG",
+            "scope": "MAIN",
+            "quickFixAvailable": false,
+            "messageFormattings": [],
+            "codeVariants": [],
+            "cleanCodeAttribute": "DISTINCT",
+            "cleanCodeAttributeCategory": "ADAPTABLE",
+            "impacts": [
+                {
+                    "softwareQuality": "RELIABILITY",
+                    "severity": "MEDIUM"
+                }
+            ],
+            "issueStatus": "OPEN",
+            "prioritizedRule": false,
+            "fromSonarQubeUpdate": false,
+            "internalTags": [],
+            "linkedTicketStatus": "NOT_LINKED"
+        }
+    ],
+    "components": [
+        {
+            "key": "receta-app-frontend",
+            "enabled": true,
+            "qualifier": "TRK",
+            "name": "receta app frontend",
+            "longName": "receta app frontend"
+        },
+        {
+            "key": "receta-app-frontend:src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+            "enabled": true,
+            "qualifier": "FIL",
+            "name": "WebController.java",
+            "longName": "src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java",
+            "path": "src/main/java/com/duoc/seguridadcalidad/controladores/WebController.java"
+        }
+    ],
+    "facets": []
+}
