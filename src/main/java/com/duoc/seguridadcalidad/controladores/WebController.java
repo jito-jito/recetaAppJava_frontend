@@ -1,5 +1,6 @@
 package com.duoc.seguridadcalidad.controladores;
 
+import com.duoc.seguridadcalidad.servicios.BackendApiService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,13 +22,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.web.client.RestTemplate;
 import jakarta.servlet.http.HttpSession;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Controlador web para manejar las páginas del frontend y conexión con backend
@@ -35,92 +36,188 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Controller
 public class WebController {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final String BACKEND_URL = "http://localhost:8080";
+    // --- Constantes de sesión ---
+    private static final String SESSION_JWT = "jwtToken";
+    private static final String SESSION_USER = "username";
+
+    // --- Constantes de modelo (Thymeleaf) ---
+    private static final String MODEL_AUTHENTICATED = "authenticated";
+    private static final String MODEL_USERNAME = "username";
+    private static final String MODEL_RECETAS = "recetas";
+    private static final String MODEL_MIS_RECETAS = "misRecetas";
+    private static final String MODEL_FAVORITOS_IDS = "favoritosIds";
+    private static final String MODEL_ERROR = "error";
+
+    // --- Constantes de respuesta JSON ---
+    private static final String KEY_SUCCESS = "success";
+    private static final String KEY_MESSAGE = "message";
+
+    // --- Constantes de mensajes ---
+    private static final String MSG_NO_AUTORIZADO = "No autorizado";
+    private static final String MSG_ERROR_CONEXION = "Error de conexión: ";
+
+    // --- Servicio de backend ---
+    private final BackendApiService backendApi;
+
+    public WebController(BackendApiService backendApi) {
+        this.backendApi = backendApi;
+    }
+
+    // ========================================================================
+    // Métodos helper privados — eliminan duplicación de código
+    // ========================================================================
+
+    /** Obtiene el token JWT de la sesión, o null si no existe. */
+    private String getToken(HttpSession session) {
+        return (String) session.getAttribute(SESSION_JWT);
+    }
+
+    /** Obtiene el username de la sesión, o null si no existe. */
+    private String getUsername(HttpSession session) {
+        return (String) session.getAttribute(SESSION_USER);
+    }
+
+    /** Agrega información de autenticación al modelo Thymeleaf. */
+    private void addAuthToModel(Model model, HttpSession session) {
+        String token = getToken(session);
+        String username = getUsername(session);
+        if (token != null && username != null) {
+            model.addAttribute(MODEL_AUTHENTICATED, true);
+            model.addAttribute(MODEL_USERNAME, username);
+        } else {
+            model.addAttribute(MODEL_AUTHENTICATED, false);
+        }
+    }
+
+    /** Helper: Proxy GET genérico al backend — retorna la respuesta tal cual. */
+    private ResponseEntity<String> proxyGet(String path, String token) {
+        try {
+            HttpResponse<String> response = backendApi.get(path, token);
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
+        }
+    }
+
+    /** Helper: Proxy POST autenticado con body JSON al backend. */
+    private ResponseEntity<String> proxyPostAuth(String path, Map<String, Object> body, HttpSession session) {
+        String token = getToken(session);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MSG_NO_AUTORIZADO);
+        }
+        try {
+            HttpResponse<String> response = backendApi.postJson(path, token, backendApi.toJson(body));
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
+        }
+    }
+
+    /** Helper: Toggle favorito (agregar/quitar) — lógica compartida. */
+    private ResponseEntity<Map<String, Object>> toggleFavorito(
+            Long recetaId, HttpSession session, boolean agregar) {
+        Map<String, Object> response = new HashMap<>();
+        String token = getToken(session);
+
+        if (token == null) {
+            response.put(KEY_SUCCESS, false);
+            response.put(KEY_MESSAGE, "No autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        try {
+            String path = "/api/usuarios/favoritos/" + recetaId;
+            HttpResponse<String> backendResponse = agregar
+                    ? backendApi.postEmpty(path, token)
+                    : backendApi.delete(path, token);
+
+            if (backendResponse.statusCode() == 200) {
+                response.put(KEY_SUCCESS, true);
+                response.put(KEY_MESSAGE, agregar
+                        ? "Receta agregada a favoritos exitosamente"
+                        : "Receta quitada de favoritos exitosamente");
+                response.put("recetaId", recetaId);
+            } else {
+                response.put(KEY_SUCCESS, false);
+                response.put(KEY_MESSAGE, agregar
+                        ? "Error al agregar a favoritos"
+                        : "Error al quitar de favoritos");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            response.put(KEY_SUCCESS, false);
+            response.put(KEY_MESSAGE, MSG_ERROR_CONEXION + e.getMessage());
+        } catch (Exception e) {
+            response.put(KEY_SUCCESS, false);
+            response.put(KEY_MESSAGE, MSG_ERROR_CONEXION + e.getMessage());
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /** Obtiene los IDs de recetas favoritas del usuario autenticado. */
+    private Set<Object> obtenerFavoritosIds(String jwtToken) {
+        try {
+            HttpResponse<String> favoritosResponse = backendApi.get("/api/usuarios/favoritos", jwtToken);
+            if (favoritosResponse.statusCode() == 200) {
+                List<Map<String, Object>> favoritos = backendApi.parseListResponse(favoritosResponse.body());
+                Set<Object> favoritosIds = new HashSet<>();
+                for (Map<String, Object> favorito : favoritos) {
+                    favoritosIds.add(favorito.get("idReceta"));
+                }
+                return favoritosIds;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            // Si hay error obteniendo favoritos, continuar sin ellos
+        }
+        return Collections.emptySet();
+    }
+
+    // ========================================================================
+    // Endpoints de vistas (Thymeleaf)
+    // ========================================================================
 
     /**
      * Página principal
      */
     @GetMapping("/")
     public String inicio(Model model, HttpSession session) {
-        // Verificar si hay sesión activa
-        String jwtToken = (String) session.getAttribute("jwtToken");
-        String username = (String) session.getAttribute("username");
-
-        if (jwtToken != null && username != null) {
-            // Usuario autenticado
-            model.addAttribute("authenticated", true);
-            model.addAttribute("username", username);
-        } else {
-            // Usuario no autenticado
-            model.addAttribute("authenticated", false);
-        }
+        addAuthToModel(model, session);
+        String jwtToken = getToken(session);
 
         try {
-            // Obtener recetas del backend
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes"))
-                    .header("Accept", "application/json")
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = backendApi.get("/recipes", null);
 
             if (response.statusCode() == 200) {
-                // Parsear las recetas usando ObjectMapper
-                com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>> typeRef = new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>() {
-                };
-
-                java.util.List<java.util.Map<String, Object>> recetas = objectMapper.readValue(response.body(),
-                        typeRef);
-                model.addAttribute("recetas", recetas);
-
-                // Si el usuario está autenticado, también obtener sus favoritos
-                if (jwtToken != null) {
-                    try {
-                        HttpRequest favoritosRequest = HttpRequest.newBuilder()
-                                .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos"))
-                                .header("Accept", "application/json")
-                                .header("Authorization", jwtToken)
-                                .GET()
-                                .build();
-
-                        HttpResponse<String> favoritosResponse = client.send(favoritosRequest,
-                                HttpResponse.BodyHandlers.ofString());
-
-                        if (favoritosResponse.statusCode() == 200) {
-                            // Parsear favoritos y crear lista de IDs
-                            java.util.List<java.util.Map<String, Object>> favoritos = objectMapper
-                                    .readValue(favoritosResponse.body(), typeRef);
-                            java.util.Set<Object> favoritosIds = new java.util.HashSet<>();
-
-                            for (java.util.Map<String, Object> favorito : favoritos) {
-                                favoritosIds.add(favorito.get("idReceta"));
-                            }
-
-                            model.addAttribute("favoritosIds", favoritosIds);
-                        } else {
-                            model.addAttribute("favoritosIds", java.util.Collections.emptySet());
-                        }
-                    } catch (Exception e) {
-                        // Si hay error obteniendo favoritos, continuar sin ellos
-                        model.addAttribute("favoritosIds", java.util.Collections.emptySet());
-                    }
-                } else {
-                    model.addAttribute("favoritosIds", java.util.Collections.emptySet());
-                }
-
+                model.addAttribute(MODEL_RECETAS, backendApi.parseListResponse(response.body()));
+                model.addAttribute(MODEL_FAVORITOS_IDS,
+                        jwtToken != null ? obtenerFavoritosIds(jwtToken) : Collections.emptySet());
             } else {
-                model.addAttribute("recetas", java.util.Collections.emptyList());
-                model.addAttribute("favoritosIds", java.util.Collections.emptySet());
-                model.addAttribute("error", "No se pudieron cargar las recetas del backend");
+                model.addAttribute(MODEL_RECETAS, Collections.emptyList());
+                model.addAttribute(MODEL_FAVORITOS_IDS, Collections.emptySet());
+                model.addAttribute(MODEL_ERROR, "No se pudieron cargar las recetas del backend");
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            model.addAttribute(MODEL_RECETAS, Collections.emptyList());
+            model.addAttribute(MODEL_FAVORITOS_IDS, Collections.emptySet());
+            model.addAttribute(MODEL_ERROR, MSG_ERROR_CONEXION + e.getMessage());
         } catch (Exception e) {
-            // En caso de error, mostrar lista vacía
-            model.addAttribute("recetas", java.util.Collections.emptyList());
-            model.addAttribute("favoritosIds", java.util.Collections.emptySet());
-            model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
+            model.addAttribute(MODEL_RECETAS, Collections.emptyList());
+            model.addAttribute(MODEL_FAVORITOS_IDS, Collections.emptySet());
+            model.addAttribute(MODEL_ERROR, MSG_ERROR_CONEXION + e.getMessage());
         }
 
         return "inicio";
@@ -131,9 +228,7 @@ public class WebController {
      */
     @GetMapping("/login")
     public String login(HttpSession session) {
-        // Si ya está logueado, redireccionar a detalle
-
-        if (session.getAttribute("jwtToken") != null) {
+        if (getToken(session) != null) {
             return "redirect:/detalle";
         }
         return "login";
@@ -144,62 +239,35 @@ public class WebController {
      */
     @GetMapping("/detalle")
     public String detalle(HttpSession session, Model model) {
-        // Verificar autenticación
-        String token = (String) session.getAttribute("jwtToken");
-        String username = (String) session.getAttribute("username");
+        String token = getToken(session);
+        String username = getUsername(session);
 
         if (token == null || username == null) {
-            // No está autenticado, redireccionar a login
             return "redirect:/login";
         }
 
-        // Agregar información del usuario al modelo
-        model.addAttribute("username", username);
-        model.addAttribute("authenticated", true);
+        model.addAttribute(MODEL_USERNAME, username);
+        model.addAttribute(MODEL_AUTHENTICATED, true);
 
         try {
-            HttpClient client = HttpClient.newHttpClient();
-            com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>> typeRef = new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>() {};
+            HttpResponse<String> responseFavs = backendApi.get("/api/usuarios/favoritos", token);
+            model.addAttribute(MODEL_RECETAS, responseFavs.statusCode() == 200
+                    ? backendApi.parseListResponse(responseFavs.body())
+                    : Collections.emptyList());
 
-            // 1. Obtener recetas favoritas del usuario
-            HttpRequest requestFavs = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos"))
-                    .header("Accept", "application/json")
-                    .header("Authorization", token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> responseFavs = client.send(requestFavs, HttpResponse.BodyHandlers.ofString());
-            if (responseFavs.statusCode() == 200) {
-                java.util.List<java.util.Map<String, Object>> favoritos = objectMapper.readValue(responseFavs.body(), typeRef);
-                model.addAttribute("recetas", favoritos);
-            } else {
-                model.addAttribute("recetas", java.util.Collections.emptyList());
-                model.addAttribute("errorFav", "No se pudieron cargar las recetas favoritas");
-            }
-
-            // 2. Obtener recetas creadas por el usuario (Borradores y Publicadas)
-            HttpRequest requestMisRecetas = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/mis-recetas"))
-                    .header("Accept", "application/json")
-                    .header("Authorization", token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> responseMis = client.send(requestMisRecetas, HttpResponse.BodyHandlers.ofString());
-            if (responseMis.statusCode() == 200) {
-                java.util.List<java.util.Map<String, Object>> misRecetas = objectMapper.readValue(responseMis.body(), typeRef);
-                model.addAttribute("misRecetas", misRecetas);
-            } else {
-                model.addAttribute("misRecetas", java.util.Collections.emptyList());
-                model.addAttribute("errorMis", "No se pudieron cargar tus recetas creadas");
-            }
-
+            HttpResponse<String> responseMis = backendApi.get("/recipes/mis-recetas", token);
+            model.addAttribute(MODEL_MIS_RECETAS, responseMis.statusCode() == 200
+                    ? backendApi.parseListResponse(responseMis.body())
+                    : Collections.emptyList());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            model.addAttribute(MODEL_RECETAS, Collections.emptyList());
+            model.addAttribute(MODEL_MIS_RECETAS, Collections.emptyList());
+            model.addAttribute(MODEL_ERROR, MSG_ERROR_CONEXION + e.getMessage());
         } catch (Exception e) {
-            // En caso de error, mostrar listas vacías
-            model.addAttribute("recetas", java.util.Collections.emptyList());
-            model.addAttribute("misRecetas", java.util.Collections.emptyList());
-            model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
+            model.addAttribute(MODEL_RECETAS, Collections.emptyList());
+            model.addAttribute(MODEL_MIS_RECETAS, Collections.emptyList());
+            model.addAttribute(MODEL_ERROR, MSG_ERROR_CONEXION + e.getMessage());
         }
 
         return "detalle";
@@ -210,19 +278,51 @@ public class WebController {
      */
     @GetMapping("/crear-receta")
     public String crearReceta(HttpSession session, Model model) {
-        String token = (String) session.getAttribute("jwtToken");
-        String username = (String) session.getAttribute("username");
+        String token = getToken(session);
+        String username = getUsername(session);
 
         if (token == null || username == null) {
-            return "redirect:/login"; // No está autenticado, redireccionar a login
+            return "redirect:/login";
         }
 
-        model.addAttribute("username", username);
-        model.addAttribute("authenticated", true);
-        model.addAttribute("apiToken", token); // Inyectamos el JWT de sesión para el Javascript en la web
+        model.addAttribute(MODEL_USERNAME, username);
+        model.addAttribute(MODEL_AUTHENTICATED, true);
+        model.addAttribute("apiToken", token);
 
         return "crear-receta";
     }
+
+    /**
+     * Endpoint para ver el detalle completo de la receta
+     */
+    @GetMapping("/receta/{id}")
+    public String verReceta(@PathVariable Long id, Model model, HttpSession session) {
+        addAuthToModel(model, session);
+        String token = getToken(session);
+        if (token != null) {
+            model.addAttribute("apiToken", token);
+        }
+
+        try {
+            HttpResponse<String> response = backendApi.get("/recipes/" + id, null);
+            if (response.statusCode() == 200) {
+                model.addAttribute("receta", backendApi.parseMapResponse(response.body()));
+            } else {
+                model.addAttribute(MODEL_ERROR, "No se encontró la receta");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            model.addAttribute(MODEL_ERROR, MSG_ERROR_CONEXION + e.getMessage());
+        } catch (Exception e) {
+            model.addAttribute(MODEL_ERROR, MSG_ERROR_CONEXION + e.getMessage());
+        }
+
+        return "receta-detalle";
+    }
+
+    // ========================================================================
+    // Endpoints proxy — API REST
+    // ========================================================================
 
     /**
      * Endpoint proxy para creación de receta multimedial
@@ -235,9 +335,9 @@ public class WebController {
             @RequestParam(value = "videos", required = false) MultipartFile[] videos,
             HttpSession session) {
 
-        String token = (String) session.getAttribute("jwtToken");
+        String token = getToken(session);
         if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MSG_NO_AUTORIZADO);
         }
 
         try {
@@ -249,41 +349,34 @@ public class WebController {
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("receta", recetaJson);
 
-            if (imagenes != null) {
-                for (MultipartFile file : imagenes) {
-                    if (!file.isEmpty()) {
-                        body.add("imagenes", new ByteArrayResource(file.getBytes()) {
-                            @Override
-                            public String getFilename() {
-                                return file.getOriginalFilename();
-                            }
-                        });
-                    }
-                }
-            }
-
-            if (videos != null) {
-                for (MultipartFile file : videos) {
-                    if (!file.isEmpty()) {
-                        body.add("videos", new ByteArrayResource(file.getBytes()) {
-                            @Override
-                            public String getFilename() {
-                                return file.getOriginalFilename();
-                            }
-                        });
-                    }
-                }
-            }
+            addFilesToBody(body, "imagenes", imagenes);
+            addFilesToBody(body, "videos", videos);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(BACKEND_URL + "/recipes", requestEntity, String.class);
-
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    backendApi.getBackendUrl() + "/recipes", requestEntity, String.class);
             return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
 
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error de proxy frontend interno: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error de proxy frontend interno: " + e.getMessage());
+        }
+    }
+
+    /** Helper para agregar archivos multipart al body. */
+    private void addFilesToBody(MultiValueMap<String, Object> body, String fieldName, MultipartFile[] files) throws java.io.IOException {
+        if (files == null) return;
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                body.add(fieldName, new ByteArrayResource(file.getBytes()) {
+                    @Override
+                    public String getFilename() {
+                        return file.getOriginalFilename();
+                    }
+                });
+            }
         }
     }
 
@@ -297,25 +390,22 @@ public class WebController {
             @RequestParam("publicada") boolean publicada,
             HttpSession session) {
 
-        String token = (String) session.getAttribute("jwtToken");
+        String token = getToken(session);
         if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MSG_NO_AUTORIZADO);
         }
 
         try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/estado?publicada=" + publicada))
-                    .header("Authorization", token)
-                    .PUT(HttpRequest.BodyPublishers.noBody())
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = backendApi.put(
+                    "/recipes/" + id + "/estado?publicada=" + publicada, token);
             return ResponseEntity.status(response.statusCode()).body(response.body());
-
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error de proxy en el frontend: " + e.getMessage());
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
         }
     }
 
@@ -324,58 +414,44 @@ public class WebController {
      */
     @PostMapping("/api/login")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> loginPost(
+            @RequestBody Map<String, String> loginData, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
 
         try {
             String username = loginData.get("username");
             String password = loginData.get("password");
 
-            // Crear cliente HTTP
-            HttpClient client = HttpClient.newHttpClient();
-
-            // Preparar datos para enviar al backend
             Map<String, String> backendData = new HashMap<>();
             backendData.put("username", username);
             backendData.put("password", password);
 
-            String requestBody = objectMapper.writeValueAsString(backendData);
-
-            // Crear petición al backend
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/login"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
-
-            // Enviar petición
-            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> backendResponse = backendApi.postJson(
+                    "/login", null, backendApi.toJson(backendData));
 
             if (backendResponse.statusCode() == 200) {
-                // El backend retorna el token directamente en el body como texto "Bearer
-                // eyJ..."
                 String token = backendResponse.body().trim();
-
                 if (token != null && token.startsWith("Bearer ")) {
-                    // Guardar el token completo en sesión (ya incluye "Bearer ")
-                    session.setAttribute("jwtToken", token);
-                    session.setAttribute("username", username);
-
-                    response.put("success", true);
-                    response.put("message", "Login exitoso");
+                    session.setAttribute(SESSION_JWT, token);
+                    session.setAttribute(SESSION_USER, username);
+                    response.put(KEY_SUCCESS, true);
+                    response.put(KEY_MESSAGE, "Login exitoso");
                     response.put("redirectUrl", "/detalle");
                 } else {
-                    response.put("success", false);
-                    response.put("message", "Token inválido recibido del backend");
+                    response.put(KEY_SUCCESS, false);
+                    response.put(KEY_MESSAGE, "Token inválido recibido del backend");
                 }
             } else {
-                response.put("success", false);
-                response.put("message", "Credenciales incorrectas");
+                response.put(KEY_SUCCESS, false);
+                response.put(KEY_MESSAGE, "Credenciales incorrectas");
             }
-
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            response.put(KEY_SUCCESS, false);
+            response.put(KEY_MESSAGE, MSG_ERROR_CONEXION + e.getMessage());
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error de conexión con el backend: " + e.getMessage());
+            response.put(KEY_SUCCESS, false);
+            response.put(KEY_MESSAGE, MSG_ERROR_CONEXION + e.getMessage());
         }
 
         return ResponseEntity.ok(response);
@@ -387,17 +463,14 @@ public class WebController {
     @PostMapping("/api/logout")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-
-        // Limpiar sesión
-        session.removeAttribute("jwtToken");
-        session.removeAttribute("username");
+        session.removeAttribute(SESSION_JWT);
+        session.removeAttribute(SESSION_USER);
         session.invalidate();
 
-        response.put("success", true);
-        response.put("message", "Logout exitoso");
+        Map<String, Object> response = new HashMap<>();
+        response.put(KEY_SUCCESS, true);
+        response.put(KEY_MESSAGE, "Logout exitoso");
         response.put("redirectUrl", "/login");
-
         return ResponseEntity.ok(response);
     }
 
@@ -408,17 +481,14 @@ public class WebController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> checkAuth(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
-
-        String token = (String) session.getAttribute("jwtToken");
-        String username = (String) session.getAttribute("username");
+        String token = getToken(session);
+        String username = getUsername(session);
 
         if (token != null && username != null) {
-            response.put("authenticated", true);
-            response.put("username", username);
-            // temporal
-            response.put("debug_token", token);
+            response.put(MODEL_AUTHENTICATED, true);
+            response.put(MODEL_USERNAME, username);
         } else {
-            response.put("authenticated", false);
+            response.put(MODEL_AUTHENTICATED, false);
         }
 
         return ResponseEntity.ok(response);
@@ -429,43 +499,9 @@ public class WebController {
      */
     @PostMapping("/api/favoritos/{recetaId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> agregarFavorito(@PathVariable Long recetaId, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-
-        // Verificar autenticación
-        String token = (String) session.getAttribute("jwtToken");
-        if (token == null) {
-            response.put("success", false);
-            response.put("message", "No autenticado");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            // Hacer petición al backend
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos/" + recetaId))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", token)
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .build();
-
-            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (backendResponse.statusCode() == 200) {
-                response.put("success", true);
-                response.put("message", "Receta agregada a favoritos exitosamente");
-                response.put("recetaId", recetaId);
-            } else {
-                response.put("success", false);
-                response.put("message", "Error al agregar a favoritos");
-            }
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error de conexión: " + e.getMessage());
-        }
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Map<String, Object>> agregarFavorito(
+            @PathVariable Long recetaId, HttpSession session) {
+        return toggleFavorito(recetaId, session, true);
     }
 
     /**
@@ -473,43 +509,9 @@ public class WebController {
      */
     @DeleteMapping("/api/favoritos/{recetaId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> quitarFavorito(@PathVariable Long recetaId, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-
-        // Verificar autenticación
-        String token = (String) session.getAttribute("jwtToken");
-        if (token == null) {
-            response.put("success", false);
-            response.put("message", "No autenticado");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            // Hacer petición al backend
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos/" + recetaId))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", token)
-                    .DELETE()
-                    .build();
-
-            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (backendResponse.statusCode() == 200) {
-                response.put("success", true);
-                response.put("message", "Receta quitada de favoritos exitosamente");
-                response.put("recetaId", recetaId);
-            } else {
-                response.put("success", false);
-                response.put("message", "Error al quitar de favoritos");
-            }
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error de conexión: " + e.getMessage());
-        }
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Map<String, Object>> quitarFavorito(
+            @PathVariable Long recetaId, HttpSession session) {
+        return toggleFavorito(recetaId, session, false);
     }
 
     /**
@@ -517,160 +519,53 @@ public class WebController {
      */
     @GetMapping("/api/favoritos")
     @ResponseBody
-    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> obtenerFavoritos(HttpSession session) {
-        // Verificar autenticación
-        String token = (String) session.getAttribute("jwtToken");
+    public ResponseEntity<List<Map<String, Object>>> obtenerFavoritos(HttpSession session) {
+        String token = getToken(session);
         if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
         }
 
         try {
-            // Hacer petición al backend
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/api/usuarios/favoritos"))
-                    .header("Accept", "application/json")
-                    .header("Authorization", token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> backendResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-
+            HttpResponse<String> backendResponse = backendApi.get("/api/usuarios/favoritos", token);
             if (backendResponse.statusCode() == 200) {
-                // Parsear las recetas favoritas
-                com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>> typeRef = new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>() {
-                };
-
-                java.util.List<java.util.Map<String, Object>> favoritos = objectMapper.readValue(backendResponse.body(),
-                        typeRef);
-                return ResponseEntity.ok(favoritos);
-            } else {
-                return ResponseEntity.ok(java.util.Collections.emptyList());
+                return ResponseEntity.ok(backendApi.parseListResponse(backendResponse.body()));
             }
+            return ResponseEntity.ok(Collections.emptyList());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         } catch (Exception e) {
-            return ResponseEntity.ok(java.util.Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }
     }
-    /**
-     * Endpoint para ver el detalle completo de la receta
-     */
-    @GetMapping("/receta/{id}")
-    public String verReceta(@PathVariable Long id, Model model, HttpSession session) {
-        String token = (String) session.getAttribute("jwtToken");
-        String username = (String) session.getAttribute("username");
 
-        if (token != null && username != null) {
-            model.addAttribute("authenticated", true);
-            model.addAttribute("username", username);
-            model.addAttribute("apiToken", token);
-        } else {
-            model.addAttribute("authenticated", false);
-        }
+    // ========================================================================
+    // Proxies — Comentarios y Valoraciones (usando helpers genéricos)
+    // ========================================================================
 
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/" + id))
-                    .header("Accept", "application/json")
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                java.util.Map<String, Object> receta = objectMapper.readValue(response.body(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Object>>() {});
-                model.addAttribute("receta", receta);
-            } else {
-                model.addAttribute("error", "No se encontró la receta");
-            }
-        } catch (Exception e) {
-            model.addAttribute("error", "Error de conexión con el backend: " + e.getMessage());
-        }
-
-        return "receta-detalle";
-    }
-
-    /**
-     * Proxies para Comentarios
-     */
     @GetMapping("/api/recipes/{id}/comentarios")
     @ResponseBody
     public ResponseEntity<String> getComentarios(@PathVariable Long id) {
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/comentarios"))
-                    .GET()
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return ResponseEntity.status(response.statusCode()).body(response.body());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
-        }
+        return proxyGet("/recipes/" + id + "/comentarios", null);
     }
 
     @PostMapping("/api/recipes/{id}/comentarios")
     @ResponseBody
-    public ResponseEntity<String> postComentario(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
-        String token = (String) session.getAttribute("jwtToken");
-        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado");
-
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/comentarios"))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", token)
-                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return ResponseEntity.status(response.statusCode()).body(response.body());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
-        }
+    public ResponseEntity<String> postComentario(
+            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        return proxyPostAuth("/recipes/" + id + "/comentarios", body, session);
     }
 
-    /**
-     * Proxies para Valoraciones
-     */
     @GetMapping("/api/recipes/{id}/valoraciones")
     @ResponseBody
     public ResponseEntity<String> getValoraciones(@PathVariable Long id, HttpSession session) {
-        String token = (String) session.getAttribute("jwtToken");
-        try {
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/valoraciones"))
-                    .GET();
-            // Algunas APIs requieren token para leer, otras no. Lo enviamos si lo tenemos.
-            if (token != null) {
-                requestBuilder.header("Authorization", token);
-            }
-            HttpRequest request = requestBuilder.build();
-            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            return ResponseEntity.status(response.statusCode()).body(response.body());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
-        }
+        return proxyGet("/recipes/" + id + "/valoraciones", getToken(session));
     }
 
     @PostMapping("/api/recipes/{id}/valoraciones")
     @ResponseBody
-    public ResponseEntity<String> postValoracion(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
-        String token = (String) session.getAttribute("jwtToken");
-        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autorizado");
-
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BACKEND_URL + "/recipes/" + id + "/valoraciones"))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", token)
-                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return ResponseEntity.status(response.statusCode()).body(response.body());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
-        }
+    public ResponseEntity<String> postValoracion(
+            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        return proxyPostAuth("/recipes/" + id + "/valoraciones", body, session);
     }
 }

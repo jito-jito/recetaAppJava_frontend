@@ -22,19 +22,16 @@ public class SessionConfig {
      */
     @Bean
     public ServletContextInitializer servletContextInitializer() {
-        return new ServletContextInitializer() {
-            @Override
-            public void onStartup(ServletContext servletContext) {
-                // **IMPORTANTE: Solo permitir tracking por cookies, NO por URL**
-                servletContext.setSessionTrackingModes(EnumSet.of(SessionTrackingMode.COOKIE));
-                
-                // **MITIGACIÓN: Cookie Security Configuration**
-                SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
-                sessionCookieConfig.setHttpOnly(true); // Prevenir acceso via JavaScript
-                sessionCookieConfig.setSecure(false);   // Para desarrollo local (cambiar a true en producción)
-                sessionCookieConfig.setMaxAge(1800);    // 30 minutos
-                sessionCookieConfig.setName("JSESSIONID");
-            }
+        return (ServletContext servletContext) -> {
+            // **IMPORTANTE: Solo permitir tracking por cookies, NO por URL**
+            servletContext.setSessionTrackingModes(EnumSet.of(SessionTrackingMode.COOKIE));
+
+            // **MITIGACIÓN: Cookie Security Configuration**
+            SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
+            sessionCookieConfig.setHttpOnly(true); // Prevenir acceso via JavaScript
+            sessionCookieConfig.setSecure(false);   // Para desarrollo local (cambiar a true en producción)
+            sessionCookieConfig.setMaxAge(1800);    // 30 minutos
+            sessionCookieConfig.setName("JSESSIONID");
         };
     }
 }

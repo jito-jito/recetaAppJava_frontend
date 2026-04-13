@@ -33,7 +33,7 @@ public class SecurityConfig {
             // Configurar headers de seguridad usando API moderna
             .headers(headers -> headers
                 // **MITIGACIÓN: X-Frame-Options Header Missing / Anti-clickjacking**
-                .frameOptions(frameOptions -> frameOptions.deny())
+                .frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::deny)
                 
                 // **MITIGACIÓN: X-Content-Type-Options Header Missing**
                 .contentTypeOptions(contentType -> {})
