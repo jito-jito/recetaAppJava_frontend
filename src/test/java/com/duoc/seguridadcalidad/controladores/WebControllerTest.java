@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.net.URI;
@@ -182,6 +183,18 @@ class WebControllerTest {
                 .andExpect(model().attribute("recetas", List.of()));
     }
 
+    @Test
+    void inicio_interrumpido_muestraErrorYMantieneRespuestaOk() throws Exception {
+        when(backendApi.get(eq("/recipes"), isNull()))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("inicio"))
+                .andExpect(model().attributeExists("error"))
+                .andExpect(model().attribute("recetas", List.of()));
+    }
+
     // ========================================================================
     // Tests: GET /login
     // ========================================================================
@@ -245,6 +258,45 @@ class WebControllerTest {
                 .andExpect(model().attributeExists("error"));
     }
 
+    @Test
+    void detalle_conTokenSinUsername_redireccionaALogin() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("jwtToken", "Bearer test-token-123");
+
+        mockMvc.perform(get("/detalle").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void detalle_backendNo200_retornaListasVacias() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.get(eq("/api/usuarios/favoritos"), eq("Bearer test-token-123")))
+                .thenReturn(mockResponse(500, "error"));
+        when(backendApi.get(eq("/recipes/mis-recetas"), eq("Bearer test-token-123")))
+                .thenReturn(mockResponse(503, "error"));
+
+        mockMvc.perform(get("/detalle").session(session))
+                .andExpect(status().isOk())
+                .andExpect(view().name("detalle"))
+                .andExpect(model().attribute("recetas", List.of()))
+                .andExpect(model().attribute("misRecetas", List.of()));
+    }
+
+    @Test
+    void detalle_interrumpido_muestraError() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.get(eq("/api/usuarios/favoritos"), eq("Bearer test-token-123")))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(get("/detalle").session(session))
+                .andExpect(status().isOk())
+                .andExpect(view().name("detalle"))
+                .andExpect(model().attributeExists("error"));
+    }
+
     // ========================================================================
     // Tests: GET /crear-receta
     // ========================================================================
@@ -266,6 +318,16 @@ class WebControllerTest {
                 .andExpect(model().attribute("authenticated", true))
                 .andExpect(model().attributeExists("apiToken"));
     }
+
+        @Test
+        void crearReceta_conUsernameSinToken_redireccionaALogin() throws Exception {
+                MockHttpSession session = new MockHttpSession();
+                session.setAttribute("username", "testuser");
+
+                mockMvc.perform(get("/crear-receta").session(session))
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("/login"));
+        }
 
     // ========================================================================
     // Tests: GET /receta/{id}
@@ -354,6 +416,17 @@ class WebControllerTest {
                 .andExpect(model().attributeExists("apiToken"));
     }
 
+    @Test
+    void verReceta_interrumpido_muestraErrorConexion() throws Exception {
+        when(backendApi.get(eq("/recipes/1"), isNull()))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(get("/receta/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("receta-detalle"))
+                .andExpect(model().attributeExists("error"));
+    }
+
     // ========================================================================
     // Tests: POST /api/login
     // ========================================================================
@@ -415,6 +488,20 @@ class WebControllerTest {
                 .andExpect(jsonPath("$.message", containsString("Connection refused")));
     }
 
+    @Test
+    void loginPost_interrumpido_retornaError() throws Exception {
+        when(backendApi.toJson(any())).thenReturn("{}");
+        when(backendApi.postJson(eq("/login"), isNull(), any()))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(post("/api/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"user\",\"password\":\"pass\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message", containsString("Interrumpido")));
+    }
+
     // ========================================================================
     // Tests: POST /api/logout
     // ========================================================================
@@ -449,6 +536,16 @@ class WebControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated").value(false));
     }
+
+        @Test
+        void checkAuth_conTokenSinUsername_retornaNoAutenticado() throws Exception {
+                MockHttpSession session = new MockHttpSession();
+                session.setAttribute("jwtToken", "Bearer test-token-123");
+
+                mockMvc.perform(post("/api/check-auth").session(session))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.authenticated").value(false));
+        }
 
     // ========================================================================
     // Tests: Favoritos
@@ -506,6 +603,32 @@ class WebControllerTest {
     }
 
     @Test
+    void quitarFavorito_error_retornaMensajeEspecifico() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.delete(eq("/api/usuarios/favoritos/1"), eq("Bearer test-token-123")))
+                .thenReturn(mockResponse(500, "Error"));
+
+        mockMvc.perform(delete("/api/favoritos/1").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Error al quitar de favoritos"));
+    }
+
+    @Test
+    void quitarFavorito_interrumpido_retornaMensajeErrorConexion() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.delete(eq("/api/usuarios/favoritos/1"), eq("Bearer test-token-123")))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(delete("/api/favoritos/1").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message", containsString("Interrumpido")));
+    }
+
+    @Test
     void obtenerFavoritos_sinAutenticacion_retorna401() throws Exception {
         mockMvc.perform(get("/api/favoritos"))
                 .andExpect(status().isUnauthorized());
@@ -531,6 +654,29 @@ class WebControllerTest {
 
         when(backendApi.get(any(), any()))
                 .thenThrow(new java.io.IOException("Connection refused"));
+
+        mockMvc.perform(get("/api/favoritos").session(session))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void obtenerFavoritos_backendNo200_retornaListaVacia() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.get(eq("/api/usuarios/favoritos"), eq("Bearer test-token-123")))
+                .thenReturn(mockResponse(500, "error"));
+
+        mockMvc.perform(get("/api/favoritos").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void obtenerFavoritos_interrumpido_retorna500() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.get(eq("/api/usuarios/favoritos"), eq("Bearer test-token-123")))
+                .thenThrow(new InterruptedException("Interrumpido"));
 
         mockMvc.perform(get("/api/favoritos").session(session))
                 .andExpect(status().isInternalServerError());
@@ -572,6 +718,19 @@ class WebControllerTest {
                 .andExpect(status().isInternalServerError());
     }
 
+    @Test
+    void cambiarEstado_interrumpido_retorna500() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.put(any(), any()))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(put("/api/recipes/1/estado")
+                        .param("publicada", "false")
+                        .session(session))
+                .andExpect(status().isInternalServerError());
+    }
+
     // ========================================================================
     // Tests: Comentarios proxy
     // ========================================================================
@@ -590,6 +749,15 @@ class WebControllerTest {
     void getComentarios_backendCaido_retorna500() throws Exception {
         when(backendApi.get(any(), isNull()))
                 .thenThrow(new java.io.IOException("Connection refused"));
+
+        mockMvc.perform(get("/api/recipes/1/comentarios"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void getComentarios_interrumpido_retorna500() throws Exception {
+        when(backendApi.get(eq("/recipes/1/comentarios"), isNull()))
+                .thenThrow(new InterruptedException("Interrumpido"));
 
         mockMvc.perform(get("/api/recipes/1/comentarios"))
                 .andExpect(status().isInternalServerError());
@@ -616,6 +784,61 @@ class WebControllerTest {
                         .content("{\"texto\":\"Hola\"}")
                         .session(session))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void postComentario_interrumpido_retorna500() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.toJson(any())).thenReturn("{\"texto\":\"Hola\"}");
+        when(backendApi.postJson(eq("/recipes/1/comentarios"), eq("Bearer test-token-123"), any()))
+                .thenThrow(new InterruptedException("Interrumpido"));
+
+        mockMvc.perform(post("/api/recipes/1/comentarios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"texto\":\"Hola\"}")
+                        .session(session))
+                .andExpect(status().isInternalServerError());
+    }
+
+    // ========================================================================
+    // Tests: POST /api/recipes (multipart proxy)
+    // ========================================================================
+
+    @Test
+    void crearRecetaProxy_sinAutenticacion_retorna401() throws Exception {
+        mockMvc.perform(multipart("/api/recipes").param("receta", "{}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void crearRecetaProxy_conAuthYSinArchivos_retorna500() throws Exception {
+        MockHttpSession session = createAuthSession();
+
+        when(backendApi.getBackendUrl()).thenReturn("http://localhost:1");
+
+        mockMvc.perform(multipart("/api/recipes")
+                        .param("receta", "{}")
+                        .session(session))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void crearRecetaProxy_conArchivosEjecutaRutaMultipartYRetorna500() throws Exception {
+        MockHttpSession session = createAuthSession();
+        MockMultipartFile imagenNoVacia = new MockMultipartFile(
+                "imagenes", "foto.jpg", "image/jpeg", "abc".getBytes());
+        MockMultipartFile imagenVacia = new MockMultipartFile(
+                "imagenes", "vacia.jpg", "image/jpeg", new byte[0]);
+
+        when(backendApi.getBackendUrl()).thenReturn("http://localhost:1");
+
+        mockMvc.perform(multipart("/api/recipes")
+                        .file(imagenNoVacia)
+                        .file(imagenVacia)
+                        .param("receta", "{}")
+                        .session(session))
+                .andExpect(status().isInternalServerError());
     }
 
     // ========================================================================
