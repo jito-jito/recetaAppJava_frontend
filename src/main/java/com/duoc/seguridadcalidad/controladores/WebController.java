@@ -545,8 +545,8 @@ public class WebController {
 
     @GetMapping("/api/recipes/{id}/comentarios")
     @ResponseBody
-    public ResponseEntity<String> getComentarios(@PathVariable Long id) {
-        return proxyGet("/recipes/" + id + "/comentarios", null);
+    public ResponseEntity<String> getComentarios(@PathVariable Long id, HttpSession session) {
+        return proxyGet("/recipes/" + id + "/comentarios", getToken(session));
     }
 
     @PostMapping("/api/recipes/{id}/comentarios")
@@ -554,6 +554,33 @@ public class WebController {
     public ResponseEntity<String> postComentario(
             @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         return proxyPostAuth("/recipes/" + id + "/comentarios", body, session);
+    }
+
+    @PutMapping("/api/recipes/{id}/comentarios/{comentarioId}/estado")
+    @ResponseBody
+    public ResponseEntity<String> cambiarEstadoComentarioProxy(
+            @PathVariable("id") Long id,
+            @PathVariable("comentarioId") Long comentarioId,
+            @RequestParam("bloqueado") boolean bloqueado,
+            HttpSession session) {
+
+        String token = getToken(session);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MSG_NO_AUTORIZADO);
+        }
+
+        try {
+            HttpResponse<String> response = backendApi.put(
+                    "/recipes/" + id + "/comentarios/" + comentarioId + "/estado?bloqueado=" + bloqueado, token);
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(MSG_ERROR_CONEXION + e.getMessage());
+        }
     }
 
     @GetMapping("/api/recipes/{id}/valoraciones")

@@ -58,11 +58,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!recipeId) return;
 
+    // ----- Parse JWT -----
+    function parseJwt(token) {
+        if (!token) return null;
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const rawToken = apiToken.replace('Bearer ', '');
+    const decodedToken = parseJwt(rawToken);
+    const currentUser = decodedToken ? decodedToken.sub : null;
+    const roles = decodedToken && decodedToken.authorities ? decodedToken.authorities : [];
+    const isAdmin = roles.includes('ROLE_ADMIN');
+
     // ----- Cargar Comentarios -----
     const loadComments = async () => {
         const commentsList = document.getElementById('commentsList');
         try {
-            // El backend permite GET sin token (público) - Usamos nuestro proxy que de hecho ni necesita el token en este caso
             const response = await fetch(`/api/recipes/${recipeId}/comentarios`);
             if (response.ok) {
                 const comments = await response.json();
@@ -73,6 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             commentsList.innerHTML = `<div class="empty-state-comments">Error de red al cargar comentarios.</div>`;
             console.error(error);
+        }
+    };
+
+    window.toggleCommentState = async (comentarioId, bloqueado) => {
+        if (!confirm(`¿Estás seguro de que deseas ${bloqueado ? 'bloquear/ocultar' : 'reactivar'} este comentario?`)) return;
+        
+        try {
+            const response = await fetch(`/api/recipes/${recipeId}/comentarios/${comentarioId}/estado?bloqueado=${bloqueado}`, {
+                method: 'PUT'
+            });
+            if (response.ok) {
+                await loadComments();
+            } else {
+                alert('Error al cambiar el estado del comentario');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error de red');
         }
     };
 
@@ -89,18 +127,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
         commentsList.innerHTML = '';
         comments.forEach(c => {
+            // Frontend validation safety
+            if (c.bloqueado && !isAdmin && c.autor !== currentUser) {
+                return; // Do not render if not admin and not author
+            }
+
             const dateObj = new Date(c.fecha);
             const dateString = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
             const card = document.createElement('div');
-            card.className = 'comment-card';
-            card.innerHTML = `
-                <div class="comment-header">
-                    <span class="comment-author">👤 ${c.autor}</span>
-                    <span class="comment-date">${dateString}</span>
-                </div>
-                <div class="comment-text">${c.texto}</div>
-            `;
+            card.className = 'comment-card' + (c.bloqueado ? ' blocked-comment' : '');
+            
+            const cId = c.id || c.idComentario || c.comentarioId;
+
+            // Usar API del DOM para evitar bloqueos por CSP (inline handlers/styles)
+            const header = document.createElement('div');
+            header.className = 'comment-header';
+            header.innerHTML = `<span class="comment-author">👤 ${c.autor}</span><span class="comment-date">${dateString}</span>`;
+            card.appendChild(header);
+
+            if (c.bloqueado) {
+                const warning = document.createElement('div');
+                warning.className = 'blocked-warning';
+                warning.textContent = '⚠️ Este comentario fue bloqueado por contenido inapropiado.';
+                warning.style.color = '#d63031';
+                warning.style.fontSize = '0.9em';
+                warning.style.marginBottom = '5px';
+                warning.style.padding = '4px';
+                warning.style.background = '#ffeaa7';
+                warning.style.borderRadius = '4px';
+                card.appendChild(warning);
+            }
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'comment-text';
+            // Usar textContent previene inyección XSS también
+            textDiv.textContent = c.texto;
+            if (c.bloqueado) {
+                textDiv.style.opacity = '0.6';
+                textDiv.style.fontStyle = 'italic';
+            }
+            card.appendChild(textDiv);
+
+            if (isAdmin) {
+                const actionBtn = document.createElement('button');
+                actionBtn.style.color = 'white';
+                actionBtn.style.border = 'none';
+                actionBtn.style.padding = '5px 10px';
+                actionBtn.style.borderRadius = '4px';
+                actionBtn.style.cursor = 'pointer';
+                actionBtn.style.fontSize = '0.8em';
+                actionBtn.style.marginTop = '10px';
+
+                if (c.bloqueado) {
+                    actionBtn.className = 'btn-reactivate';
+                    actionBtn.textContent = 'Reactivar Comentario';
+                    actionBtn.style.background = '#27ae60';
+                    actionBtn.addEventListener('click', () => {
+                        if (!cId) { alert('Error: ID de comentario no encontrado'); return; }
+                        window.toggleCommentState(cId, false);
+                    });
+                } else {
+                    actionBtn.className = 'btn-block';
+                    actionBtn.textContent = 'Ocultar/Bloquear';
+                    actionBtn.style.background = '#e74c3c';
+                    actionBtn.addEventListener('click', () => {
+                        if (!cId) { alert('Error: ID de comentario no encontrado'); return; }
+                        window.toggleCommentState(cId, true);
+                    });
+                }
+                card.appendChild(actionBtn);
+            }
+
             commentsList.appendChild(card);
         });
     };

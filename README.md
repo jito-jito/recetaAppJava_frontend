@@ -8,6 +8,7 @@ RecetaApp es una aplicación frontend desarrollada con Spring Boot y Thymeleaf q
 - 🍽️ **Páginas de recetas**: Colección de recetas con ingredientes e instrucciones
 - 🔐 **Página de login**: Frontend para conectar con backend de autenticación
 - 📱 **Responsive**: Compatible con dispositivos móviles
+- 🛡️ **Moderación de comentarios**: Los administradores pueden ocultar/reactivar comentarios inapropiados, que no serán visibles para el público.
 
 ## Estructura del Proyecto
 ```
@@ -100,6 +101,7 @@ Esta aplicación frontend está diseñada para conectarse con un backend separad
 - Autenticación de usuarios
 - Gestión de datos de recetas
 - API REST endpoints
+- Moderación de contenido (bloqueo/desbloqueo de comentarios)
 
 **Nota**: La conexión a base de datos y autenticación se maneja en un repositorio backend separado.
 
